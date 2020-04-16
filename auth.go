@@ -119,7 +119,7 @@ func (a *Auth) handleLogOnResponse(packet *Packet) {
 			ExtendedResult:            EResult(body.GetEresultExtended()),
 			OutOfGameSecsPerHeartbeat: body.GetOutOfGameHeartbeatSeconds(),
 			InGameSecsPerHeartbeat:    body.GetInGameHeartbeatSeconds(),
-			PublicIp:                  body.GetPublicIp(),
+			PublicIp:                  body.GetDeprecatedPublicIp(),
 			ServerTime:                body.GetRtime32ServerTime(),
 			AccountFlags:              EAccountFlags(body.GetAccountFlags()),
 			ClientSteamId:             SteamId(body.GetClientSuppliedSteamid()),

@@ -1,15 +1,10 @@
 // A simple example that uses the modules from the gsbot package and go-steam to log on
 // to the Steam network.
-//
-// The command expects log on data, optionally with an auth code:
-//
-//     gsbot [username] [password]
-//     gsbot [username] [password] [authcode]
 package main
 
 import (
+	"flag"
 	"fmt"
-	"os"
 
 	"github.com/Philipp15b/go-steam"
 	"github.com/Philipp15b/go-steam/gsbot"
@@ -17,21 +12,25 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 3 {
-		fmt.Println("gsbot example\nusage: \n\tgsbot [username] [password] [authcode]")
+	username := flag.String("username", "", "Account username")
+	password := flag.String("password", "", "Account password")
+	authcode := flag.String("authcode", "", "Auth code")
+	twofactor := flag.String("twofactor", "", "Two factor code")
+
+	flag.Parse()
+
+	if *username == "" || *password == "" {
+		flag.PrintDefaults()
 		return
-	}
-	authcode := ""
-	if len(os.Args) > 3 {
-		authcode = os.Args[3]
 	}
 
 	bot := gsbot.Default()
 	client := bot.Client
 	auth := gsbot.NewAuth(bot, &gsbot.LogOnDetails{
-		os.Args[1],
-		os.Args[2],
-		authcode,
+		Username:      *username,
+		Password:      *password,
+		AuthCode:      *authcode,
+		TwoFactorCode: *twofactor,
 	}, "sentry.bin")
 	debug, err := gsbot.NewDebug(bot, "debug")
 	if err != nil {
