@@ -22,10 +22,9 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/Philipp15b/go-steam"
-	"github.com/Philipp15b/go-steam/netutil"
-	"github.com/Philipp15b/go-steam/protocol"
-	"github.com/davecgh/go-spew/spew"
+	"github.com/benpye/go-steam"
+	"github.com/benpye/go-steam/netutil"
+	"github.com/benpye/go-steam/protocol"
 )
 
 // Base structure holding common data among GsBot modules.
@@ -193,7 +192,7 @@ func (d *Debug) HandlePacket(packet *protocol.Packet) {
 func (d *Debug) HandleEvent(event interface{}) {
 	d.eventId++
 	name := fmt.Sprintf("%d_%d_%s.txt", time.Now().Unix(), d.eventId, name(event))
-	err := ioutil.WriteFile(path.Join(d.base, "events", name), []byte(spew.Sdump(event)), 0666)
+	err := ioutil.WriteFile(path.Join(d.base, "events", name), []byte(fmt.Sprintf("%+v", event)), 0666)
 	if err != nil {
 		panic(err)
 	}

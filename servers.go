@@ -4,10 +4,10 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/Philipp15b/go-steam/netutil"
+	"github.com/benpye/go-steam/netutil"
 )
 
-// CMServers contains a list of worlwide servers
+// CMServers contains a list of worldwide servers
 var CMServers = []string{
 	"155.133.248.52:27018",
 	"162.254.197.40:27018",

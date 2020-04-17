@@ -6,9 +6,9 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/Philipp15b/go-steam"
-	"github.com/Philipp15b/go-steam/gsbot"
-	"github.com/Philipp15b/go-steam/protocol/steamlang"
+	"github.com/benpye/go-steam"
+	"github.com/benpye/go-steam/gsbot"
+	"github.com/benpye/go-steam/protocol/steamlang"
 )
 
 func main() {

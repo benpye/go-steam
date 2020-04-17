@@ -57,10 +57,10 @@ namespace GoSteamLanguageGenerator
             sb.AppendLine("import (");
             sb.AppendLine("    \"io\"");
             sb.AppendLine("    \"encoding/binary\"");
-            sb.AppendLine("    \"github.com/golang/protobuf/proto\"");
-            sb.AppendLine("    \"github.com/Philipp15b/go-steam/steamid\"");
-            sb.AppendLine("    \"github.com/Philipp15b/go-steam/rwu\"");
-            sb.AppendLine("   . \"github.com/Philipp15b/go-steam/protocol/protobuf\"");
+            sb.AppendLine("    \"google.golang.org/protobuf/proto\"");
+            sb.AppendLine("    \"github.com/benpye/go-steam/steamid\"");
+            sb.AppendLine("    \"github.com/benpye/go-steam/rwu\"");
+            sb.AppendLine("    \"github.com/benpye/go-steam/protocol/protobuf/steam\"");
             sb.AppendLine(")");
             sb.AppendLine();
 
@@ -283,7 +283,7 @@ namespace GoSteamLanguageGenerator
                 }
                 else if (node.Flags == "proto")
                 {
-                    sb.AppendLine("    " + GetUpperName(node.Name) + " *" + EmitType(node.Type));
+                    sb.AppendLine("    " + GetUpperName(node.Name) + " *" + "steam." + EmitType(node.Type));
                 }
                 else
                 {
@@ -315,7 +315,7 @@ namespace GoSteamLanguageGenerator
                 }
                 else if (node.Flags == "proto")
                 {
-                    ctor = "new(" + GetUpperName(EmitType(node.Type)) + ")";
+                    ctor = "new(steam." + GetUpperName(EmitType(node.Type)) + ")";
                 }
                 else if (firstDefault == null)
                 {
