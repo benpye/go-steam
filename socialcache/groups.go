@@ -15,48 +15,48 @@ import (
 // 	}
 type GroupsList struct {
 	mutex sync.RWMutex
-	byId  map[steamid.SteamId]*Group
+	byID  map[steamid.SteamID]*Group
 }
 
 // Returns a new groups list
 func NewGroupsList() *GroupsList {
-	return &GroupsList{byId: make(map[steamid.SteamId]*Group)}
+	return &GroupsList{byID: make(map[steamid.SteamID]*Group)}
 }
 
 // Adds a group to the group list
 func (list *GroupsList) Add(group Group) {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
-	_, exists := list.byId[group.SteamId]
+	_, exists := list.byID[group.SteamID]
 	if !exists { //make sure this doesnt already exist
-		list.byId[group.SteamId] = &group
+		list.byID[group.SteamID] = &group
 	}
 }
 
 // Removes a group from the group list
-func (list *GroupsList) Remove(id steamid.SteamId) {
+func (list *GroupsList) Remove(id steamid.SteamID) {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
-	delete(list.byId, id)
+	delete(list.byID, id)
 }
 
 // Returns a copy of the groups map
-func (list *GroupsList) GetCopy() map[steamid.SteamId]Group {
+func (list *GroupsList) GetCopy() map[steamid.SteamID]Group {
 	list.mutex.RLock()
 	defer list.mutex.RUnlock()
-	glist := make(map[steamid.SteamId]Group)
-	for key, group := range list.byId {
+	glist := make(map[steamid.SteamID]Group)
+	for key, group := range list.byID {
 		glist[key] = *group
 	}
 	return glist
 }
 
 // Returns a copy of the group of a given SteamId
-func (list *GroupsList) ById(id steamid.SteamId) (Group, error) {
+func (list *GroupsList) ByID(id steamid.SteamID) (Group, error) {
 	list.mutex.RLock()
 	defer list.mutex.RUnlock()
 	id = id.ChatToClan()
-	if val, ok := list.byId[id]; ok {
+	if val, ok := list.byID[id]; ok {
 		return *val, nil
 	}
 	return Group{}, errors.New("Group not found")
@@ -66,76 +66,76 @@ func (list *GroupsList) ById(id steamid.SteamId) (Group, error) {
 func (list *GroupsList) Count() int {
 	list.mutex.RLock()
 	defer list.mutex.RUnlock()
-	return len(list.byId)
+	return len(list.byID)
 }
 
-//Setter methods
-func (list *GroupsList) SetName(id steamid.SteamId, name string) {
+// Setter methods
+func (list *GroupsList) SetName(id steamid.SteamID, name string) {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
 	id = id.ChatToClan()
-	if val, ok := list.byId[id]; ok {
+	if val, ok := list.byID[id]; ok {
 		val.Name = name
 	}
 }
 
-func (list *GroupsList) SetAvatar(id steamid.SteamId, hash []byte) {
+func (list *GroupsList) SetAvatar(id steamid.SteamID, hash []byte) {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
 	id = id.ChatToClan()
-	if val, ok := list.byId[id]; ok {
+	if val, ok := list.byID[id]; ok {
 		val.Avatar = hash
 	}
 }
 
-func (list *GroupsList) SetRelationship(id steamid.SteamId, relationship steamlang.EClanRelationship) {
+func (list *GroupsList) SetRelationship(id steamid.SteamID, relationship steamlang.EClanRelationship) {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
 	id = id.ChatToClan()
-	if val, ok := list.byId[id]; ok {
+	if val, ok := list.byID[id]; ok {
 		val.Relationship = relationship
 	}
 }
 
-func (list *GroupsList) SetMemberTotalCount(id steamid.SteamId, count uint32) {
+func (list *GroupsList) SetMemberTotalCount(id steamid.SteamID, count uint32) {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
 	id = id.ChatToClan()
-	if val, ok := list.byId[id]; ok {
+	if val, ok := list.byID[id]; ok {
 		val.MemberTotalCount = count
 	}
 }
 
-func (list *GroupsList) SetMemberOnlineCount(id steamid.SteamId, count uint32) {
+func (list *GroupsList) SetMemberOnlineCount(id steamid.SteamID, count uint32) {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
 	id = id.ChatToClan()
-	if val, ok := list.byId[id]; ok {
+	if val, ok := list.byID[id]; ok {
 		val.MemberOnlineCount = count
 	}
 }
 
-func (list *GroupsList) SetMemberChattingCount(id steamid.SteamId, count uint32) {
+func (list *GroupsList) SetMemberChattingCount(id steamid.SteamID, count uint32) {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
 	id = id.ChatToClan()
-	if val, ok := list.byId[id]; ok {
+	if val, ok := list.byID[id]; ok {
 		val.MemberChattingCount = count
 	}
 }
 
-func (list *GroupsList) SetMemberInGameCount(id steamid.SteamId, count uint32) {
+func (list *GroupsList) SetMemberInGameCount(id steamid.SteamID, count uint32) {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
 	id = id.ChatToClan()
-	if val, ok := list.byId[id]; ok {
+	if val, ok := list.byID[id]; ok {
 		val.MemberInGameCount = count
 	}
 }
 
 // A Group
 type Group struct {
-	SteamId             steamid.SteamId `json:",string"`
+	SteamID             steamid.SteamID `json:",string"`
 	Name                string
 	Avatar              []byte
 	Relationship        steamlang.EClanRelationship

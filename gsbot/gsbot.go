@@ -151,7 +151,7 @@ func (s *ServerList) ConnectBind(laddr *net.TCPAddr) (bool, error) {
 
 // This module logs incoming packets and events to a directory.
 type Debug struct {
-	packetId, eventId uint64
+	packetID, eventID uint64
 	bot               *GsBot
 	base              string
 }
@@ -174,8 +174,8 @@ func NewDebug(bot *GsBot, base string) (*Debug, error) {
 }
 
 func (d *Debug) HandlePacket(packet *protocol.Packet) {
-	d.packetId++
-	name := path.Join(d.base, "packets", fmt.Sprintf("%d_%d_%s", time.Now().Unix(), d.packetId, packet.EMsg))
+	d.packetID++
+	name := path.Join(d.base, "packets", fmt.Sprintf("%d_%d_%s", time.Now().Unix(), d.packetID, packet.EMsg))
 
 	text := packet.String() + "\n\n" + hex.Dump(packet.Data)
 	err := ioutil.WriteFile(name+".txt", []byte(text), 0666)
@@ -190,8 +190,8 @@ func (d *Debug) HandlePacket(packet *protocol.Packet) {
 }
 
 func (d *Debug) HandleEvent(event interface{}) {
-	d.eventId++
-	name := fmt.Sprintf("%d_%d_%s.txt", time.Now().Unix(), d.eventId, name(event))
+	d.eventID++
+	name := fmt.Sprintf("%d_%d_%s.txt", time.Now().Unix(), d.eventID, name(event))
 	err := ioutil.WriteFile(path.Join(d.base, "events", name), []byte(fmt.Sprintf("%+v", event)), 0666)
 	if err != nil {
 		panic(err)
@@ -203,7 +203,6 @@ func name(obj interface{}) string {
 	ind := reflect.Indirect(val)
 	if ind.IsValid() {
 		return ind.Type().Name()
-	} else {
-		return val.Type().Name()
 	}
+	return val.Type().Name()
 }

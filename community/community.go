@@ -8,7 +8,7 @@ import (
 
 const cookiePath = "https://steamcommunity.com/"
 
-func SetCookies(client *http.Client, sessionId, steamLogin, steamLoginSecure string) {
+func SetCookies(client *http.Client, sessionID, steamLogin, steamLoginSecure string) {
 	if client.Jar == nil {
 		client.Jar, _ = cookiejar.New(new(cookiejar.Options))
 	}
@@ -18,16 +18,16 @@ func SetCookies(client *http.Client, sessionId, steamLogin, steamLoginSecure str
 	}
 	client.Jar.SetCookies(base, []*http.Cookie{
 		// It seems that, for some reason, Steam tries to URL-decode the cookie.
-		&http.Cookie{
+		{
 			Name:  "sessionid",
-			Value: url.QueryEscape(sessionId),
+			Value: url.QueryEscape(sessionID),
 		},
 		// steamLogin is already URL-encoded.
-		&http.Cookie{
+		{
 			Name:  "steamLogin",
 			Value: steamLogin,
 		},
-		&http.Cookie{
+		{
 			Name:  "steamLoginSecure",
 			Value: steamLoginSecure,
 		},

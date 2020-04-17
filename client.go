@@ -108,12 +108,12 @@ func (c *Client) RegisterPacketHandler(handler PacketHandler) {
 	c.handlers = append(c.handlers, handler)
 }
 
-func (c *Client) GetNextJobID() protocol.JobId {
-	return protocol.JobId(atomic.AddUint64(&c.currentJobID, 1))
+func (c *Client) GetNextJobID() protocol.JobID {
+	return protocol.JobID(atomic.AddUint64(&c.currentJobID, 1))
 }
 
-func (c *Client) SteamID() steamid.SteamId {
-	return steamid.SteamId(atomic.LoadUint64(&c.steamID))
+func (c *Client) SteamID() steamid.SteamID {
+	return steamid.SteamID(atomic.LoadUint64(&c.steamID))
 }
 
 func (c *Client) SessionID() int32 {
@@ -196,8 +196,8 @@ func (c *Client) Disconnect() {
 // Writes to this client when not connected are ignored.
 func (c *Client) Write(msg protocol.IMsg) {
 	if cm, ok := msg.(protocol.IClientMsg); ok {
-		cm.SetSessionId(c.SessionID())
-		cm.SetSteamId(c.SteamID())
+		cm.SetSessionID(c.SessionID())
+		cm.SetSteamID(c.SteamID())
 	}
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()

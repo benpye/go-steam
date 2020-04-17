@@ -19,16 +19,16 @@ const (
 
 func newItem(event *tradeapi.Event) *Item {
 	return &Item{
-		event.AppId,
-		event.ContextId,
-		event.AssetId,
+		event.AppID,
+		event.ContextID,
+		event.AssetID,
 	}
 }
 
 type Item struct {
-	AppId     uint32
-	ContextId uint64
-	AssetId   uint64
+	AppID     uint32
+	ContextID uint64
+	AssetID   uint64
 }
 
 type ItemAddedEvent struct {
@@ -44,16 +44,16 @@ type UnreadyEvent struct{}
 
 func newCurrency(event *tradeapi.Event) *Currency {
 	return &Currency{
-		event.AppId,
-		event.ContextId,
-		event.CurrencyId,
+		event.AppID,
+		event.ContextID,
+		event.CurrencyID,
 	}
 }
 
 type Currency struct {
-	AppId      uint32
-	ContextId  uint64
-	CurrencyId uint64
+	AppID      uint32
+	ContextID  uint64
+	CurrencyID uint64
 }
 
 type SetCurrencyEvent struct {

@@ -13,9 +13,9 @@ import (
 
 type InventoryApps map[string]*InventoryApp
 
-func (i *InventoryApps) Get(appId uint32) (*InventoryApp, error) {
+func (i *InventoryApps) Get(appID uint32) (*InventoryApp, error) {
 	iMap := (map[string]*InventoryApp)(*i)
-	if inventoryApp, ok := iMap[strconv.FormatUint(uint64(appId), 10)]; ok {
+	if inventoryApp, ok := iMap[strconv.FormatUint(uint64(appID), 10)]; ok {
 		return inventoryApp, nil
 	}
 	return nil, fmt.Errorf("inventory app not found")
@@ -26,7 +26,7 @@ func (i *InventoryApps) ToMap() map[string]*InventoryApp {
 }
 
 type InventoryApp struct {
-	AppId            uint32
+	AppID            uint32
 	Name             string
 	Icon             string
 	Link             string
@@ -38,9 +38,9 @@ type InventoryApp struct {
 
 type Contexts map[string]*Context
 
-func (c *Contexts) Get(contextId uint64) (*Context, error) {
+func (c *Contexts) Get(contextID uint64) (*Context, error) {
 	cMap := (map[string]*Context)(*c)
-	if context, ok := cMap[strconv.FormatUint(contextId, 10)]; ok {
+	if context, ok := cMap[strconv.FormatUint(contextID, 10)]; ok {
 		return context, nil
 	}
 	return nil, fmt.Errorf("context not found")
@@ -51,13 +51,13 @@ func (c *Contexts) ToMap() map[string]*Context {
 }
 
 type Context struct {
-	ContextId  uint64 `json:"id,string"`
+	ContextID  uint64 `json:"id,string"`
 	AssetCount uint32 `json:"asset_count"`
 	Name       string
 }
 
-func GetInventoryApps(client *http.Client, steamId steamid.SteamId) (InventoryApps, error) {
-	resp, err := http.Get("http://steamcommunity.com/profiles/" + steamId.ToString() + "/inventory/")
+func GetInventoryApps(client *http.Client, steamID steamid.SteamID) (InventoryApps, error) {
+	resp, err := http.Get("http://steamcommunity.com/profiles/" + steamID.ToString() + "/inventory/")
 	if err != nil {
 		return nil, err
 	}

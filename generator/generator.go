@@ -181,7 +181,7 @@ func (w *quotedWriter) Write(p []byte) (n int, err error) {
 		}
 	}
 	if n != len(p) {
-		nw, err := w.w.Write(p[n:len(p)])
+		nw, err := w.w.Write(p[n:])
 		n += nw
 		return n, err
 	}

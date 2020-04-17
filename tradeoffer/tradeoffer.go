@@ -37,21 +37,21 @@ const (
 )
 
 type Asset struct {
-	AppId      uint32 `json:"-"`
-	ContextId  uint64 `json:",string"`
-	AssetId    uint64 `json:",string"`
-	CurrencyId uint64 `json:",string"`
-	ClassId    uint64 `json:",string"`
-	InstanceId uint64 `json:",string"`
+	AppID      uint32 `json:"-"`
+	ContextID  uint64 `json:",string"`
+	AssetID    uint64 `json:",string"`
+	CurrencyID uint64 `json:",string"`
+	ClassID    uint64 `json:",string"`
+	InstanceID uint64 `json:",string"`
 	Amount     uint64 `json:",string"`
 	Missing    bool
 }
 
 type TradeOffer struct {
-	TradeOfferId       uint64                       `json:",string"`
-	TradeId            uint64                       `json:",string"`
-	OtherAccountId     uint32                       `json:"accountid_other"`
-	OtherSteamId       steamid.SteamId              `json:"-"`
+	TradeOfferID       uint64                       `json:",string"`
+	TradeID            uint64                       `json:",string"`
+	OtherAccountID     uint32                       `json:"accountid_other"`
+	OtherSteamID       steamid.SteamID              `json:"-"`
 	Message            string                       `json:"message"`
 	ExpirationTime     uint32                       `json:"expiraton_time"`
 	State              TradeOfferState              `json:"trade_offer_state"`
@@ -74,11 +74,11 @@ func (t *TradeOffer) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
-	if t.OtherAccountId == 0 {
-		t.OtherSteamId = steamid.SteamId(0)
+	if t.OtherAccountID == 0 {
+		t.OtherSteamID = steamid.SteamID(0)
 		return nil
 	}
-	t.OtherSteamId = steamid.SteamId(uint64(t.OtherAccountId) + 76561197960265728)
+	t.OtherSteamID = steamid.SteamID(uint64(t.OtherAccountID) + 76561197960265728)
 	return nil
 }
 
@@ -93,12 +93,12 @@ type TradeOfferResult struct {
 	Descriptions []*Description
 }
 type Description struct {
-	AppId      uint32 `json:"appid"`
-	ClassId    uint64 `json:"classid,string"`
-	InstanceId uint64 `json:"instanceid,string"`
+	AppID      uint32 `json:"appid"`
+	ClassID    uint64 `json:"classid,string"`
+	InstanceID uint64 `json:"instanceid,string"`
 
-	IconUrl      string `json:"icon_url"`
-	IconUrlLarge string `json:"icon_url_large"`
+	IconURL      string `json:"icon_url"`
+	IconURLLarge string `json:"icon_url_large"`
 
 	Name           string
 	MarketName     string `json:"market_name"`

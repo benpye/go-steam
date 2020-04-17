@@ -15,8 +15,8 @@ import (
 type Packet struct {
 	EMsg        steamlang.EMsg
 	IsProto     bool
-	TargetJobId JobId
-	SourceJobId JobId
+	TargetJobID JobID
+	SourceJobID JobID
 	Data        []byte
 }
 
@@ -38,8 +38,8 @@ func NewPacket(data []byte) (*Packet, error) {
 		return &Packet{
 			EMsg:        eMsg,
 			IsProto:     false,
-			TargetJobId: JobId(header.TargetJobID),
-			SourceJobId: JobId(header.SourceJobID),
+			TargetJobID: JobID(header.TargetJobID),
+			SourceJobID: JobID(header.SourceJobID),
 			Data:        data,
 		}, nil
 	} else if steamlang.IsProto(rawEMsg) {
@@ -52,8 +52,8 @@ func NewPacket(data []byte) (*Packet, error) {
 		return &Packet{
 			EMsg:        eMsg,
 			IsProto:     true,
-			TargetJobId: JobId(header.Proto.GetJobidTarget()),
-			SourceJobId: JobId(header.Proto.GetJobidSource()),
+			TargetJobID: JobID(header.Proto.GetJobidTarget()),
+			SourceJobID: JobID(header.Proto.GetJobidSource()),
 			Data:        data,
 		}, nil
 	} else {
@@ -66,15 +66,15 @@ func NewPacket(data []byte) (*Packet, error) {
 		return &Packet{
 			EMsg:        eMsg,
 			IsProto:     false,
-			TargetJobId: JobId(header.TargetJobID),
-			SourceJobId: JobId(header.SourceJobID),
+			TargetJobID: JobID(header.TargetJobID),
+			SourceJobID: JobID(header.SourceJobID),
 			Data:        data,
 		}, nil
 	}
 }
 
 func (p *Packet) String() string {
-	return fmt.Sprintf("Packet{EMsg = %v, Proto = %v, Len = %v, TargetJobId = %v, SourceJobId = %v}", p.EMsg, p.IsProto, len(p.Data), p.TargetJobId, p.SourceJobId)
+	return fmt.Sprintf("Packet{EMsg = %v, Proto = %v, Len = %v, TargetJobId = %v, SourceJobId = %v}", p.EMsg, p.IsProto, len(p.Data), p.TargetJobID, p.SourceJobID)
 }
 
 func (p *Packet) ReadProtoMsg(body proto.Message) *ClientMsgProtobuf {

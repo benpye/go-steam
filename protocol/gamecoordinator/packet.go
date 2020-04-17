@@ -16,7 +16,7 @@ type GCPacket struct {
 	IsProto     bool
 	GCName      string
 	Body        []byte
-	TargetJobId protocol.JobId
+	TargetJobId protocol.JobID
 }
 
 func NewGCPacket(wrapper *steam.CMsgGCClient) (*GCPacket, error) {
@@ -36,14 +36,14 @@ func NewGCPacket(wrapper *steam.CMsgGCClient) (*GCPacket, error) {
 		if err != nil {
 			return nil, err
 		}
-		packet.TargetJobId = protocol.JobId(header.Proto.GetJobidTarget())
+		packet.TargetJobId = protocol.JobID(header.Proto.GetJobidTarget())
 	} else {
 		header := steamlang.NewMsgGCHdr()
 		err := header.Deserialize(r)
 		if err != nil {
 			return nil, err
 		}
-		packet.TargetJobId = protocol.JobId(header.TargetJobID)
+		packet.TargetJobId = protocol.JobID(header.TargetJobID)
 	}
 
 	body := make([]byte, r.Len())

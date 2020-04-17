@@ -47,10 +47,10 @@ func (sd *steamDirectory) Initialize() error {
 		return err
 	}
 	if r.Response.Result != 1 {
-		return fmt.Errorf("failed to get steam directory, result: %v, message: %v\n", r.Response.Result, r.Response.Message)
+		return fmt.Errorf("failed to get steam directory, result: %v, message: %v", r.Response.Result, r.Response.Message)
 	}
 	if len(r.Response.ServerList) == 0 {
-		return fmt.Errorf("steam returned zero servers for steam directory request\n")
+		return fmt.Errorf("steam returned zero servers for steam directory request")
 	}
 	sd.servers = r.Response.ServerList
 	sd.isInitialized = true

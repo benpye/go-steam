@@ -67,18 +67,18 @@ func (e *EventList) UnmarshalJSON(data []byte) error {
 }
 
 type Event struct {
-	SteamId   steamid.SteamId `json:",string"`
+	SteamID   steamid.SteamID `json:",string"`
 	Action    Action          `json:",string"`
 	Timestamp uint64
 
-	AppId     uint32
-	ContextId uint64 `json:",string"`
-	AssetId   uint64 `json:",string"`
+	AppID     uint32
+	ContextID uint64 `json:",string"`
+	AssetID   uint64 `json:",string"`
 
 	Text string // only used for chat messages
 
 	// The following is used for SetCurrency
-	CurrencyId uint64 `json:",string"`
+	CurrencyID uint64 `json:",string"`
 	OldAmount  uint64 `json:"old_amount,string"`
 	NewAmount  uint64 `json:"amount,string"`
 }
@@ -105,8 +105,8 @@ type User struct {
 }
 
 type Currency struct {
-	AppId      uint64 `json:",string"`
-	ContextId  uint64 `json:",string"`
-	CurrencyId uint64 `json:",string"`
+	AppID      uint64 `json:",string"`
+	ContextID  uint64 `json:",string"`
+	CurrencyID uint64 `json:",string"`
 	Amount     uint64 `json:",string"`
 }

@@ -83,7 +83,7 @@ func (s *Social) SetPersonaState(state steamlang.EPersonaState) {
 }
 
 // Sends a chat message to ether a room or friend
-func (s *Social) SendMessage(to steamid.SteamId, entryType steamlang.EChatEntryType, message string) {
+func (s *Social) SendMessage(to steamid.SteamID, entryType steamlang.EChatEntryType, message string) {
 	//Friend
 	if to.GetAccountType() == int32(steamlang.EAccountType_Individual) || to.GetAccountType() == int32(steamlang.EAccountType_ConsoleUser) {
 		s.client.Write(protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientFriendMsg, &steam.CMsgClientFriendMsg{
@@ -104,21 +104,21 @@ func (s *Social) SendMessage(to steamid.SteamId, entryType steamlang.EChatEntryT
 
 // Adds a friend to your friends list or accepts a friend. You'll receive a FriendStateEvent
 // for every new/changed friend
-func (s *Social) AddFriend(id steamid.SteamId) {
+func (s *Social) AddFriend(id steamid.SteamID) {
 	s.client.Write(protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientAddFriend, &steam.CMsgClientAddFriend{
 		SteamidToAdd: proto.Uint64(id.ToUint64()),
 	}))
 }
 
 // Removes a friend from your friends list
-func (s *Social) RemoveFriend(id steamid.SteamId) {
+func (s *Social) RemoveFriend(id steamid.SteamID) {
 	s.client.Write(protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientRemoveFriend, &steam.CMsgClientRemoveFriend{
 		Friendid: proto.Uint64(id.ToUint64()),
 	}))
 }
 
 // Ignores or unignores a friend on Steam
-func (s *Social) IgnoreFriend(id steamid.SteamId, setIgnore bool) {
+func (s *Social) IgnoreFriend(id steamid.SteamID, setIgnore bool) {
 	ignore := uint8(1) //True
 	if !setIgnore {
 		ignore = uint8(0) //False
@@ -131,7 +131,7 @@ func (s *Social) IgnoreFriend(id steamid.SteamId, setIgnore bool) {
 }
 
 // Requests persona state for a list of specified SteamIds
-func (s *Social) RequestFriendListInfo(ids []steamid.SteamId, requestedInfo steamlang.EClientPersonaStateFlag) {
+func (s *Social) RequestFriendListInfo(ids []steamid.SteamID, requestedInfo steamlang.EClientPersonaStateFlag) {
 	var friends []uint64
 	for _, id := range ids {
 		friends = append(friends, id.ToUint64())
@@ -143,12 +143,12 @@ func (s *Social) RequestFriendListInfo(ids []steamid.SteamId, requestedInfo stea
 }
 
 // Requests persona state for a specified SteamId
-func (s *Social) RequestFriendInfo(id steamid.SteamId, requestedInfo steamlang.EClientPersonaStateFlag) {
-	s.RequestFriendListInfo([]steamid.SteamId{id}, requestedInfo)
+func (s *Social) RequestFriendInfo(id steamid.SteamID, requestedInfo steamlang.EClientPersonaStateFlag) {
+	s.RequestFriendListInfo([]steamid.SteamID{id}, requestedInfo)
 }
 
 // Requests profile information for a specified SteamId
-func (s *Social) RequestProfileInfo(id steamid.SteamId) {
+func (s *Social) RequestProfileInfo(id steamid.SteamID) {
 	s.client.Write(protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientFriendProfileInfo, &steam.CMsgClientFriendProfileInfo{
 		SteamidFriend: proto.Uint64(id.ToUint64()),
 	}))
@@ -160,7 +160,7 @@ func (s *Social) RequestOfflineMessages() {
 }
 
 // Attempts to join a chat room
-func (s *Social) JoinChat(id steamid.SteamId) {
+func (s *Social) JoinChat(id steamid.SteamID) {
 	chatID := id.ClanToChat()
 	s.client.Write(protocol.NewClientMsg(&steamlang.MsgClientJoinChat{
 		SteamIdChat: chatID,
@@ -168,7 +168,7 @@ func (s *Social) JoinChat(id steamid.SteamId) {
 }
 
 // Attempts to leave a chat room
-func (s *Social) LeaveChat(id steamid.SteamId) {
+func (s *Social) LeaveChat(id steamid.SteamID) {
 	chatID := id.ClanToChat()
 	payload := new(bytes.Buffer)
 	binary.Write(payload, binary.LittleEndian, s.client.SteamID().ToUint64())                 // ChatterActedOn
@@ -181,7 +181,7 @@ func (s *Social) LeaveChat(id steamid.SteamId) {
 }
 
 // Kicks the specified chat member from the given chat room
-func (s *Social) KickChatMember(room steamid.SteamId, user steamid.SteamId) {
+func (s *Social) KickChatMember(room steamid.SteamID, user steamid.SteamID) {
 	chatID := room.ClanToChat()
 	s.client.Write(protocol.NewClientMsg(&steamlang.MsgClientChatAction{
 		SteamIdChat:        chatID,
@@ -191,7 +191,7 @@ func (s *Social) KickChatMember(room steamid.SteamId, user steamid.SteamId) {
 }
 
 // Bans the specified chat member from the given chat room
-func (s *Social) BanChatMember(room steamid.SteamId, user steamid.SteamId) {
+func (s *Social) BanChatMember(room steamid.SteamID, user steamid.SteamID) {
 	chatID := room.ClanToChat()
 	s.client.Write(protocol.NewClientMsg(&steamlang.MsgClientChatAction{
 		SteamIdChat:        chatID,
@@ -201,7 +201,7 @@ func (s *Social) BanChatMember(room steamid.SteamId, user steamid.SteamId) {
 }
 
 // Unbans the specified chat member from the given chat room
-func (s *Social) UnbanChatMember(room steamid.SteamId, user steamid.SteamId) {
+func (s *Social) UnbanChatMember(room steamid.SteamID, user steamid.SteamID) {
 	chatID := room.ClanToChat()
 	s.client.Write(protocol.NewClientMsg(&steamlang.MsgClientChatAction{
 		SteamIdChat:        chatID,
@@ -252,9 +252,9 @@ func (s *Social) handleAccountInfo(packet *protocol.Packet) {
 func (s *Social) handleFriendsList(packet *protocol.Packet) {
 	list := new(steam.CMsgClientFriendsList)
 	packet.ReadProtoMsg(list)
-	var friends []steamid.SteamId
+	var friends []steamid.SteamID
 	for _, friend := range list.GetFriends() {
-		steamID := steamid.SteamId(friend.GetUlfriendid())
+		steamID := steamid.SteamID(friend.GetUlfriendid())
 		isClan := steamID.GetAccountType() == int32(steamlang.EAccountType_Clan)
 
 		if isClan {
@@ -263,7 +263,7 @@ func (s *Social) handleFriendsList(packet *protocol.Packet) {
 				s.Groups.Remove(steamID)
 			} else {
 				s.Groups.Add(socialcache.Group{
-					SteamId:      steamID,
+					SteamID:      steamID,
 					Relationship: rel,
 				})
 
@@ -277,7 +277,7 @@ func (s *Social) handleFriendsList(packet *protocol.Packet) {
 				s.Friends.Remove(steamID)
 			} else {
 				s.Friends.Add(socialcache.Friend{
-					SteamId:      steamID,
+					SteamID:      steamID,
 					Relationship: rel,
 				})
 
@@ -301,7 +301,7 @@ func (s *Social) handlePersonaState(packet *protocol.Packet) {
 	packet.ReadProtoMsg(list)
 	flags := steamlang.EClientPersonaStateFlag(list.GetStatusFlags())
 	for _, friend := range list.GetFriends() {
-		id := steamid.SteamId(friend.GetFriendid())
+		id := steamid.SteamID(friend.GetFriendid())
 		if id == s.client.SteamID() { //this is our client id
 			s.mutex.Lock()
 			if friend.GetPlayerName() != "" {
@@ -355,7 +355,7 @@ func (s *Social) handlePersonaState(packet *protocol.Packet) {
 			GameServerIP:           friend.GetGameServerIp(),
 			GameServerPort:         friend.GetGameServerPort(),
 			QueryPort:              friend.GetQueryPort(),
-			SourceSteamID:          steamid.SteamId(friend.GetSteamidSource()),
+			SourceSteamID:          steamid.SteamID(friend.GetSteamidSource()),
 			GameDataBlob:           friend.GetGameDataBlob(),
 			Name:                   friend.GetPlayerName(),
 			Avatar:                 friend.GetAvatarHash(),
@@ -407,7 +407,7 @@ func (s *Social) handleClanState(packet *protocol.Packet) {
 	}
 
 	//Add stuff to group
-	clanid := steamid.SteamId(body.GetSteamidClan())
+	clanid := steamid.SteamID(body.GetSteamidClan())
 	if body.NameInfo != nil {
 		info := body.NameInfo
 		s.Groups.SetName(clanid, info.GetClanName())
@@ -438,7 +438,7 @@ func (s *Social) handleFriendResponse(packet *protocol.Packet) {
 	packet.ReadProtoMsg(body)
 	s.client.Emit(&FriendAddedEvent{
 		Result:      steamlang.EResult(body.GetEresult()),
-		SteamID:     steamid.SteamId(body.GetSteamIdAdded()),
+		SteamID:     steamid.SteamID(body.GetSteamIdAdded()),
 		PersonaName: body.GetPersonaNameAdded(),
 	})
 }
@@ -448,7 +448,7 @@ func (s *Social) handleFriendMsg(packet *protocol.Packet) {
 	packet.ReadProtoMsg(body)
 	message := string(bytes.Split(body.GetMessage(), []byte{0x0})[0])
 	s.client.Emit(&ChatMsgEvent{
-		ChatterID: steamid.SteamId(body.GetSteamidFrom()),
+		ChatterID: steamid.SteamID(body.GetSteamidFrom()),
 		Message:   message,
 		EntryType: steamlang.EChatEntryType(body.GetChatEntryType()),
 		Timestamp: time.Unix(int64(body.GetRtime32ServerTimestamp()), 0),
@@ -460,8 +460,8 @@ func (s *Social) handleChatMsg(packet *protocol.Packet) {
 	payload := packet.ReadClientMsg(body).Payload
 	message := string(bytes.Split(payload, []byte{0x0})[0])
 	s.client.Emit(&ChatMsgEvent{
-		ChatRoomID: steamid.SteamId(body.SteamIdChatRoom),
-		ChatterID:  steamid.SteamId(body.SteamIdChatter),
+		ChatRoomID: steamid.SteamID(body.SteamIdChatRoom),
+		ChatterID:  steamid.SteamID(body.SteamIdChatter),
 		Message:    message,
 		EntryType:  steamlang.EChatEntryType(body.ChatMsgType),
 	})
@@ -474,24 +474,24 @@ func (s *Social) handleChatEnter(packet *protocol.Packet) {
 	name, _ := rwu.ReadString(reader)
 	rwu.ReadByte(reader) //0
 	count := body.NumMembers
-	chatID := steamid.SteamId(body.SteamIdChat)
-	clanID := steamid.SteamId(body.SteamIdClan)
-	s.Chats.Add(socialcache.Chat{SteamId: chatID, GroupId: clanID})
+	chatID := steamid.SteamID(body.SteamIdChat)
+	clanID := steamid.SteamID(body.SteamIdClan)
+	s.Chats.Add(socialcache.Chat{SteamID: chatID, GroupID: clanID})
 	for i := 0; i < int(count); i++ {
 		id, chatPerm, clanPerm := readChatMember(reader)
 		rwu.ReadBytes(reader, 6) //No idea what this is
 		s.Chats.AddChatMember(chatID, socialcache.ChatMember{
-			SteamId:         steamid.SteamId(id),
+			SteamID:         steamid.SteamID(id),
 			ChatPermissions: chatPerm,
 			ClanPermissions: clanPerm,
 		})
 	}
 	s.client.Emit(&ChatEnterEvent{
-		ChatRoomID:    steamid.SteamId(body.SteamIdChat),
-		FriendID:      steamid.SteamId(body.SteamIdFriend),
+		ChatRoomID:    steamid.SteamID(body.SteamIdChat),
+		FriendID:      steamid.SteamID(body.SteamIdFriend),
 		ChatRoomType:  steamlang.EChatRoomType(body.ChatRoomType),
-		OwnerID:       steamid.SteamId(body.SteamIdOwner),
-		ClanID:        steamid.SteamId(body.SteamIdClan),
+		OwnerID:       steamid.SteamID(body.SteamIdOwner),
+		ClanID:        steamid.SteamID(body.SteamIdClan),
 		ChatFlags:     byte(body.ChatFlags),
 		EnterResponse: steamlang.EChatRoomEnterResponse(body.EnterResponse),
 		Name:          name,
@@ -502,7 +502,7 @@ func (s *Social) handleChatMemberInfo(packet *protocol.Packet) {
 	body := new(steamlang.MsgClientChatMemberInfo)
 	payload := packet.ReadClientMsg(body).Payload
 	reader := bytes.NewBuffer(payload)
-	chatID := steamid.SteamId(body.SteamIdChat)
+	chatID := steamid.SteamID(body.SteamIdChat)
 	if body.Type == steamlang.EChatInfoType_StateChange {
 		actedOn, _ := rwu.ReadUint64(reader)
 		state, _ := rwu.ReadInt32(reader)
@@ -512,28 +512,28 @@ func (s *Social) handleChatMemberInfo(packet *protocol.Packet) {
 		if stateChange == steamlang.EChatMemberStateChange_Entered {
 			_, chatPerm, clanPerm := readChatMember(reader)
 			s.Chats.AddChatMember(chatID, socialcache.ChatMember{
-				SteamId:         steamid.SteamId(actedOn),
+				SteamID:         steamid.SteamID(actedOn),
 				ChatPermissions: chatPerm,
 				ClanPermissions: clanPerm,
 			})
 		} else if stateChange == steamlang.EChatMemberStateChange_Banned || stateChange == steamlang.EChatMemberStateChange_Kicked ||
 			stateChange == steamlang.EChatMemberStateChange_Disconnected || stateChange == steamlang.EChatMemberStateChange_Left {
-			s.Chats.RemoveChatMember(chatID, steamid.SteamId(actedOn))
+			s.Chats.RemoveChatMember(chatID, steamid.SteamID(actedOn))
 		}
 		stateInfo := StateChangeDetails{
-			ChatterActedOn: steamid.SteamId(actedOn),
+			ChatterActedOn: steamid.SteamID(actedOn),
 			StateChange:    steamlang.EChatMemberStateChange(stateChange),
-			ChatterActedBy: steamid.SteamId(actedBy),
+			ChatterActedBy: steamid.SteamID(actedBy),
 		}
 		s.client.Emit(&ChatMemberInfoEvent{
-			ChatRoomID:      steamid.SteamId(body.SteamIdChat),
+			ChatRoomID:      steamid.SteamID(body.SteamIdChat),
 			Type:            steamlang.EChatInfoType(body.Type),
 			StateChangeInfo: stateInfo,
 		})
 	}
 }
 
-func readChatMember(r io.Reader) (steamid.SteamId, steamlang.EChatPermission, steamlang.EClanPermission) {
+func readChatMember(r io.Reader) (steamid.SteamID, steamlang.EChatPermission, steamlang.EClanPermission) {
 	rwu.ReadString(r) // MessageObject
 	rwu.ReadByte(r)   // 7
 	rwu.ReadString(r) //steamid
@@ -544,15 +544,15 @@ func readChatMember(r io.Reader) (steamid.SteamId, steamlang.EChatPermission, st
 	rwu.ReadByte(r)   // 2
 	rwu.ReadString(r) //Details
 	clan, _ := rwu.ReadInt32(r)
-	return steamid.SteamId(id), steamlang.EChatPermission(chat), steamlang.EClanPermission(clan)
+	return steamid.SteamID(id), steamlang.EChatPermission(chat), steamlang.EClanPermission(clan)
 }
 
 func (s *Social) handleChatActionResult(packet *protocol.Packet) {
 	body := new(steamlang.MsgClientChatActionResult)
 	packet.ReadClientMsg(body)
 	s.client.Emit(&ChatActionResultEvent{
-		ChatRoomID: steamid.SteamId(body.SteamIdChat),
-		ChatterID:  steamid.SteamId(body.SteamIdUserActedOn),
+		ChatRoomID: steamid.SteamID(body.SteamIdChat),
+		ChatterID:  steamid.SteamID(body.SteamIdUserActedOn),
 		Action:     steamlang.EChatAction(body.ChatAction),
 		Result:     steamlang.EChatActionResult(body.ActionResult),
 	})
@@ -562,11 +562,11 @@ func (s *Social) handleChatInvite(packet *protocol.Packet) {
 	body := new(steam.CMsgClientChatInvite)
 	packet.ReadProtoMsg(body)
 	s.client.Emit(&ChatInviteEvent{
-		InvitedID:    steamid.SteamId(body.GetSteamIdInvited()),
-		ChatRoomID:   steamid.SteamId(body.GetSteamIdChat()),
-		PatronID:     steamid.SteamId(body.GetSteamIdPatron()),
+		InvitedID:    steamid.SteamID(body.GetSteamIdInvited()),
+		ChatRoomID:   steamid.SteamID(body.GetSteamIdChat()),
+		PatronID:     steamid.SteamID(body.GetSteamIdPatron()),
 		ChatRoomType: steamlang.EChatRoomType(body.GetChatroomType()),
-		FriendChatID: steamid.SteamId(body.GetSteamIdFriendChat()),
+		FriendChatID: steamid.SteamID(body.GetSteamIdFriendChat()),
 		ChatRoomName: body.GetChatName(),
 		GameID:       body.GetGameId(),
 	})
@@ -585,7 +585,7 @@ func (s *Social) handleProfileInfoResponse(packet *protocol.Packet) {
 	packet.ReadProtoMsg(body)
 	s.client.Emit(&ProfileInfoEvent{
 		Result:      steamlang.EResult(body.GetEresult()),
-		SteamID:     steamid.SteamId(body.GetSteamidFriend()),
+		SteamID:     steamid.SteamID(body.GetSteamidFriend()),
 		TimeCreated: body.GetTimeCreated(),
 		RealName:    body.GetRealName(),
 		CityName:    body.GetCityName(),
@@ -599,7 +599,7 @@ func (s *Social) handleProfileInfoResponse(packet *protocol.Packet) {
 func (s *Social) handleFriendMessageHistoryResponse(packet *protocol.Packet) {
 	body := new(steam.CMsgClientChatGetFriendMessageHistoryResponse)
 	packet.ReadProtoMsg(body)
-	steamid := steamid.SteamId(body.GetSteamid())
+	steamid := steamid.SteamID(body.GetSteamid())
 	for _, message := range body.GetMessages() {
 		if !message.GetUnread() {
 			continue // Skip already read messages

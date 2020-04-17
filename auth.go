@@ -76,7 +76,7 @@ func (a *Auth) LogOn(details *LogOnDetails) {
 		logon.ShouldRememberPassword = proto.Bool(details.ShouldRememberPassword)
 	}
 
-	atomic.StoreUint64(&a.client.steamID, uint64(steamid.NewIdAdv(0, 1, int32(steamlang.EUniverse_Public), int32(steamlang.EAccountType_Individual))))
+	atomic.StoreUint64(&a.client.steamID, uint64(steamid.NewIDAdv(0, 1, int32(steamlang.EUniverse_Public), int32(steamlang.EAccountType_Individual))))
 
 	a.client.Write(protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientLogon, logon))
 }
@@ -122,7 +122,7 @@ func (a *Auth) handleLogOnResponse(packet *protocol.Packet) {
 			PublicIP:                  body.GetDeprecatedPublicIp(),
 			ServerTime:                body.GetRtime32ServerTime(),
 			AccountFlags:              steamlang.EAccountFlags(body.GetAccountFlags()),
-			ClientSteamID:             steamid.SteamId(body.GetClientSuppliedSteamid()),
+			ClientSteamID:             steamid.SteamID(body.GetClientSuppliedSteamid()),
 			EmailDomain:               body.GetEmailDomain(),
 			CellID:                    body.GetCellId(),
 			CellIDPingThreshold:       body.GetCellIdPingThreshold(),
@@ -180,7 +180,7 @@ func (a *Auth) handleUpdateMachineAuth(packet *protocol.Packet) {
 	msg := protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientUpdateMachineAuthResponse, &steam.CMsgClientUpdateMachineAuthResponse{
 		ShaFile: sha,
 	})
-	msg.SetTargetJobId(packet.SourceJobId)
+	msg.SetTargetJobID(packet.SourceJobID)
 	a.client.Write(msg)
 
 	a.client.Emit(&MachineAuthUpdateEvent{sha})

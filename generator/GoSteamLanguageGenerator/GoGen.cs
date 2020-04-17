@@ -55,8 +55,9 @@ namespace GoSteamLanguageGenerator
             sb.AppendLine("package steamlang");
             sb.AppendLine();
             sb.AppendLine("import (");
-            sb.AppendLine("    \"io\"");
             sb.AppendLine("    \"encoding/binary\"");
+            sb.AppendLine("    \"io\"");
+            sb.AppendLine("");
             sb.AppendLine("    \"google.golang.org/protobuf/proto\"");
             sb.AppendLine("    \"github.com/benpye/go-steam/steamid\"");
             sb.AppendLine("    \"github.com/benpye/go-steam/rwu\"");
@@ -279,7 +280,7 @@ namespace GoSteamLanguageGenerator
                 }
                 else if (node.Flags == "steamidmarshal" && EmitSymbol(node.Type) == "ulong")
                 {
-                    sb.AppendLine("    " + GetUpperName(node.Name) + " steamid.SteamId");
+                    sb.AppendLine("    " + GetUpperName(node.Name) + " steamid.SteamID");
                 }
                 else if (node.Flags == "proto")
                 {
@@ -428,7 +429,7 @@ namespace GoSteamLanguageGenerator
                 {
                     sb.AppendLine("    t" + tempNum + ", err := rwu.ReadUint64(r)");
                     sb.AppendLine("    if err != nil { return err }");
-                    sb.AppendLine("    d." + GetUpperName(node.Name) + " = steamid.SteamId(t" + tempNum + ")");
+                    sb.AppendLine("    d." + GetUpperName(node.Name) + " = steamid.SteamID(t" + tempNum + ")");
                     tempNum++;
                     continue;
                 }

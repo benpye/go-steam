@@ -20,27 +20,27 @@ func NewGenericInventory() GenericInventory {
 }
 
 // Get inventory for specified AppId and ContextId
-func (i *GenericInventory) Get(appId uint32, contextId uint64) (*Inventory, error) {
+func (i *GenericInventory) Get(appID uint32, contextID uint64) (*Inventory, error) {
 	iMap := (map[uint32]map[uint64]*Inventory)(*i)
-	iMap2, ok := iMap[appId]
+	iMap2, ok := iMap[appID]
 	if !ok {
 		return nil, fmt.Errorf("inventory for specified appId not found")
 	}
-	inv, ok := iMap2[contextId]
+	inv, ok := iMap2[contextID]
 	if !ok {
 		return nil, fmt.Errorf("inventory for specified contextId not found")
 	}
 	return inv, nil
 }
 
-func (i *GenericInventory) Add(appId uint32, contextId uint64, inv *Inventory) {
+func (i *GenericInventory) Add(appID uint32, contextID uint64, inv *Inventory) {
 	iMap := (map[uint32]map[uint64]*Inventory)(*i)
-	iMap2, ok := iMap[appId]
+	iMap2, ok := iMap[appID]
 	if !ok {
 		iMap2 = make(map[uint64]*Inventory)
-		iMap[appId] = iMap2
+		iMap[appID] = iMap2
 	}
-	iMap2[contextId] = inv
+	iMap2[contextID] = inv
 }
 
 type Inventory struct {
@@ -57,9 +57,9 @@ func (i *Items) ToMap() map[string]*Item {
 	return (map[string]*Item)(*i)
 }
 
-func (i *Items) Get(assetId uint64) (*Item, error) {
+func (i *Items) Get(assetID uint64) (*Item, error) {
 	iMap := (map[string]*Item)(*i)
-	if item, ok := iMap[strconv.FormatUint(assetId, 10)]; ok {
+	if item, ok := iMap[strconv.FormatUint(assetID, 10)]; ok {
 		return item, nil
 	}
 	return nil, fmt.Errorf("item not found")
@@ -92,10 +92,10 @@ func (d *Descriptions) ToMap() map[string]*Description {
 	return (map[string]*Description)(*d)
 }
 
-func (d *Descriptions) Get(classId uint64, instanceId uint64) (*Description, error) {
+func (d *Descriptions) Get(classID uint64, instanceID uint64) (*Description, error) {
 	dMap := (map[string]*Description)(*d)
-	descId := fmt.Sprintf("%v_%v", classId, instanceId)
-	if desc, ok := dMap[descId]; ok {
+	descID := fmt.Sprintf("%v_%v", classID, instanceID)
+	if desc, ok := dMap[descID]; ok {
 		return desc, nil
 	}
 	return nil, fmt.Errorf("description not found")
@@ -109,28 +109,28 @@ func (d *Descriptions) UnmarshalJSON(data []byte) error {
 }
 
 type Item struct {
-	Id         uint64 `json:",string"`
-	ClassId    uint64 `json:",string"`
-	InstanceId uint64 `json:",string"`
+	ID         uint64 `json:",string"`
+	ClassID    uint64 `json:",string"`
+	InstanceID uint64 `json:",string"`
 	Amount     uint64 `json:",string"`
 	Pos        uint32
 }
 
 type Currency struct {
-	Id         uint64 `json:",string"`
-	ClassId    uint64 `json:",string"`
+	ID         uint64 `json:",string"`
+	ClassID    uint64 `json:",string"`
 	IsCurrency bool   `json:"is_currency"`
 	Pos        uint32
 }
 
 type Description struct {
-	AppId      uint32 `json:",string"`
-	ClassId    uint64 `json:",string"`
-	InstanceId uint64 `json:",string"`
+	AppID      uint32 `json:",string"`
+	ClassID    uint64 `json:",string"`
+	InstanceID uint64 `json:",string"`
 
-	IconUrl      string `json:"icon_url"`
-	IconUrlLarge string `json:"icon_url_large"`
-	IconDragUrl  string `json:"icon_drag_url"`
+	IconURL      string `json:"icon_url"`
+	IconURLLarge string `json:"icon_url_large"`
+	IconDragURL  string `json:"icon_drag_url"`
 
 	Name           string
 	MarketName     string `json:"market_name"`
@@ -175,15 +175,15 @@ type Action struct {
 }
 
 type AppInfo struct {
-	AppId uint32
+	AppID uint32
 	Name  string
 	Icon  string
 	Link  string
 }
 
 type Tag struct {
-	InternalName string `json:internal_name`
+	InternalName string `json:"internal_name"`
 	Name         string
 	Category     string
-	CategoryName string `json:category_name`
+	CategoryName string `json:"category_name"`
 }

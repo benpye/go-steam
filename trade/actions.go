@@ -39,16 +39,16 @@ func (t *Trade) Poll() ([]interface{}, error) {
 	return t.Events(), nil
 }
 
-func (t *Trade) GetTheirInventory(contextId uint64, appId uint32) (*inventory.Inventory, error) {
+func (t *Trade) GetTheirInventory(contextID uint64, appID uint32) (*inventory.Inventory, error) {
 	return inventory.GetFullInventory(func() (*inventory.PartialInventory, error) {
-		return t.api.GetForeignInventory(contextId, appId, nil)
+		return t.api.GetForeignInventory(contextID, appID, nil)
 	}, func(start uint) (*inventory.PartialInventory, error) {
-		return t.api.GetForeignInventory(contextId, appId, &start)
+		return t.api.GetForeignInventory(contextID, appID, &start)
 	})
 }
 
-func (t *Trade) GetOwnInventory(contextId uint64, appId uint32) (*inventory.Inventory, error) {
-	return t.api.GetOwnInventory(contextId, appId)
+func (t *Trade) GetOwnInventory(contextID uint64, appID uint32) (*inventory.Inventory, error) {
+	return t.api.GetOwnInventory(contextID, appID)
 }
 
 func (t *Trade) GetMain() (*tradeapi.Main, error) {
@@ -56,11 +56,11 @@ func (t *Trade) GetMain() (*tradeapi.Main, error) {
 }
 
 func (t *Trade) AddItem(slot Slot, item *Item) error {
-	return t.action(t.api.AddItem(uint(slot), item.AssetId, item.ContextId, item.AppId))
+	return t.action(t.api.AddItem(uint(slot), item.AssetID, item.ContextID, item.AppID))
 }
 
 func (t *Trade) RemoveItem(slot Slot, item *Item) error {
-	return t.action(t.api.RemoveItem(uint(slot), item.AssetId, item.ContextId, item.AppId))
+	return t.action(t.api.RemoveItem(uint(slot), item.AssetID, item.ContextID, item.AppID))
 }
 
 func (t *Trade) Chat(message string) error {
@@ -68,7 +68,7 @@ func (t *Trade) Chat(message string) error {
 }
 
 func (t *Trade) SetCurrency(amount uint, currency *Currency) error {
-	return t.action(t.api.SetCurrency(amount, currency.CurrencyId, currency.ContextId, currency.AppId))
+	return t.action(t.api.SetCurrency(amount, currency.CurrencyID, currency.ContextID, currency.AppID))
 }
 
 func (t *Trade) SetReady(ready bool) error {

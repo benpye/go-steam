@@ -13,7 +13,7 @@ type LoggedOnEvent struct {
 	PublicIP                  uint32
 	ServerTime                uint32
 	AccountFlags              steamlang.EAccountFlags
-	ClientSteamID             steamid.SteamId `json:",string"`
+	ClientSteamID             steamid.SteamID `json:",string"`
 	EmailDomain               string
 	CellID                    uint32
 	CellIDPingThreshold       uint32

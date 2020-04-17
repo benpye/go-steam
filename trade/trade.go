@@ -11,7 +11,7 @@ import (
 const pollTimeout = time.Second
 
 type Trade struct {
-	ThemId steamid.SteamId
+	ThemID steamid.SteamID
 
 	MeReady, ThemReady bool
 
@@ -20,7 +20,7 @@ type Trade struct {
 	api          *tradeapi.Trade
 }
 
-func New(sessionId, steamLogin, steamLoginSecure string, other steamid.SteamId) *Trade {
+func New(sessionId, steamLogin, steamLoginSecure string, other steamid.SteamID) *Trade {
 	return &Trade{
 		other,
 		false, false,
@@ -82,7 +82,7 @@ func (t *Trade) updateEvents(events tradeapi.EventList) {
 		if i < t.api.LogPos {
 			continue
 		}
-		if event.SteamId != t.ThemId {
+		if event.SteamID != t.ThemID {
 			continue
 		}
 

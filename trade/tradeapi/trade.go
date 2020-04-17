@@ -19,30 +19,30 @@ import (
 	"github.com/benpye/go-steam/steamid"
 )
 
-const tradeUrl = "https://steamcommunity.com/trade/%d/"
+const tradeURL = "https://steamcommunity.com/trade/%d/"
 
 type Trade struct {
 	client *http.Client
-	other  steamid.SteamId
+	other  steamid.SteamID
 
 	LogPos  uint // not automatically updated
 	Version uint // Incremented for each item change by Steam; not automatically updated.
 
 	// the `sessionid` cookie is sent as a parameter/POST data for CSRF protection.
-	sessionId string
-	baseUrl   string
+	sessionID string
+	baseURL   string
 }
 
 // Creates a new Trade based on the given cookies `sessionid`, `steamLogin`, `steamLoginSecure` and the trade partner's Steam ID.
-func New(sessionId, steamLogin, steamLoginSecure string, other steamid.SteamId) *Trade {
+func New(sessionId, steamLogin, steamLoginSecure string, other steamid.SteamID) *Trade {
 	client := new(http.Client)
 	client.Timeout = 10 * time.Second
 
 	t := &Trade{
 		client:    client,
 		other:     other,
-		sessionId: sessionId,
-		baseUrl:   fmt.Sprintf(tradeUrl, other),
+		sessionID: sessionId,
+		baseURL:   fmt.Sprintf(tradeURL, other),
 		Version:   1,
 	}
 	community.SetCookies(t.client, sessionId, steamLogin, steamLoginSecure)
@@ -57,7 +57,7 @@ var onProbationRegex = regexp.MustCompile(`var g_bTradePartnerProbation = (\w+);
 
 // Fetches the main HTML page and parses it. Thread-safe.
 func (t *Trade) GetMain() (*Main, error) {
-	resp, err := t.client.Get(t.baseUrl)
+	resp, err := t.client.Get(t.baseURL)
 	if err != nil {
 		return nil, err
 	}
@@ -81,10 +81,10 @@ func (t *Trade) GetMain() (*Main, error) {
 func (t *Trade) postWithStatus(url string, data map[string]string) (*Status, error) {
 	status := new(Status)
 
-	req := netutil.NewPostForm(url, netutil.ToUrlValues(data))
+	req := netutil.NewPostForm(url, netutil.ToURLValues(data))
 	// Tales of Madness and Pain, Episode 1: If you forget this, Steam will return an error
 	// saying "missing required parameter", even though they are all there. IT WAS JUST THE HEADER, ARGH!
-	req.Header.Add("Referer", t.baseUrl)
+	req.Header.Add("Referer", t.baseURL)
 
 	resp, err := t.client.Do(req)
 	if err != nil {
@@ -100,96 +100,96 @@ func (t *Trade) postWithStatus(url string, data map[string]string) (*Status, err
 }
 
 func (t *Trade) GetStatus() (*Status, error) {
-	return t.postWithStatus(t.baseUrl+"tradestatus/", map[string]string{
-		"sessionid": t.sessionId,
+	return t.postWithStatus(t.baseURL+"tradestatus/", map[string]string{
+		"sessionid": t.sessionID,
 		"logpos":    strconv.FormatUint(uint64(t.LogPos), 10),
 		"version":   strconv.FormatUint(uint64(t.Version), 10),
 	})
 }
 
 // Thread-safe.
-func (t *Trade) GetForeignInventory(contextId uint64, appId uint32, start *uint) (*inventory.PartialInventory, error) {
+func (t *Trade) GetForeignInventory(contextID uint64, appID uint32, start *uint) (*inventory.PartialInventory, error) {
 	data := map[string]string{
-		"sessionid": t.sessionId,
+		"sessionid": t.sessionID,
 		"steamid":   fmt.Sprintf("%d", t.other),
-		"contextid": strconv.FormatUint(contextId, 10),
-		"appid":     strconv.FormatUint(uint64(appId), 10),
+		"contextid": strconv.FormatUint(contextID, 10),
+		"appid":     strconv.FormatUint(uint64(appID), 10),
 	}
 	if start != nil {
 		data["start"] = strconv.FormatUint(uint64(*start), 10)
 	}
 
-	req, err := http.NewRequest("GET", t.baseUrl+"foreigninventory?"+netutil.ToUrlValues(data).Encode(), nil)
+	req, err := http.NewRequest("GET", t.baseURL+"foreigninventory?"+netutil.ToURLValues(data).Encode(), nil)
 	if err != nil {
 		panic(err)
 	}
-	req.Header.Add("Referer", t.baseUrl)
+	req.Header.Add("Referer", t.baseURL)
 
 	return inventory.DoInventoryRequest(t.client, req)
 }
 
 // Thread-safe.
-func (t *Trade) GetOwnInventory(contextId uint64, appId uint32) (*inventory.Inventory, error) {
-	return inventory.GetOwnInventory(t.client, contextId, appId)
+func (t *Trade) GetOwnInventory(contextID uint64, appID uint32) (*inventory.Inventory, error) {
+	return inventory.GetOwnInventory(t.client, contextID, appID)
 }
 
 func (t *Trade) Chat(message string) (*Status, error) {
-	return t.postWithStatus(t.baseUrl+"chat", map[string]string{
-		"sessionid": t.sessionId,
+	return t.postWithStatus(t.baseURL+"chat", map[string]string{
+		"sessionid": t.sessionID,
 		"logpos":    strconv.FormatUint(uint64(t.LogPos), 10),
 		"version":   strconv.FormatUint(uint64(t.Version), 10),
 		"message":   message,
 	})
 }
 
-func (t *Trade) AddItem(slot uint, itemId, contextId uint64, appId uint32) (*Status, error) {
-	return t.postWithStatus(t.baseUrl+"additem", map[string]string{
-		"sessionid": t.sessionId,
+func (t *Trade) AddItem(slot uint, itemID, contextID uint64, appID uint32) (*Status, error) {
+	return t.postWithStatus(t.baseURL+"additem", map[string]string{
+		"sessionid": t.sessionID,
 		"slot":      strconv.FormatUint(uint64(slot), 10),
-		"itemid":    strconv.FormatUint(itemId, 10),
-		"contextid": strconv.FormatUint(contextId, 10),
-		"appid":     strconv.FormatUint(uint64(appId), 10),
+		"itemid":    strconv.FormatUint(itemID, 10),
+		"contextid": strconv.FormatUint(contextID, 10),
+		"appid":     strconv.FormatUint(uint64(appID), 10),
 	})
 }
 
-func (t *Trade) RemoveItem(slot uint, itemId, contextId uint64, appId uint32) (*Status, error) {
-	return t.postWithStatus(t.baseUrl+"removeitem", map[string]string{
-		"sessionid": t.sessionId,
+func (t *Trade) RemoveItem(slot uint, itemID, contextID uint64, appID uint32) (*Status, error) {
+	return t.postWithStatus(t.baseURL+"removeitem", map[string]string{
+		"sessionid": t.sessionID,
 		"slot":      strconv.FormatUint(uint64(slot), 10),
-		"itemid":    strconv.FormatUint(itemId, 10),
-		"contextid": strconv.FormatUint(contextId, 10),
-		"appid":     strconv.FormatUint(uint64(appId), 10),
+		"itemid":    strconv.FormatUint(itemID, 10),
+		"contextid": strconv.FormatUint(contextID, 10),
+		"appid":     strconv.FormatUint(uint64(appID), 10),
 	})
 }
 
-func (t *Trade) SetCurrency(amount uint, currencyId, contextId uint64, appId uint32) (*Status, error) {
-	return t.postWithStatus(t.baseUrl+"setcurrency", map[string]string{
-		"sessionid":  t.sessionId,
+func (t *Trade) SetCurrency(amount uint, currencyID, contextID uint64, appID uint32) (*Status, error) {
+	return t.postWithStatus(t.baseURL+"setcurrency", map[string]string{
+		"sessionid":  t.sessionID,
 		"amount":     strconv.FormatUint(uint64(amount), 10),
-		"currencyid": strconv.FormatUint(uint64(currencyId), 10),
-		"contextid":  strconv.FormatUint(contextId, 10),
-		"appid":      strconv.FormatUint(uint64(appId), 10),
+		"currencyid": strconv.FormatUint(uint64(currencyID), 10),
+		"contextid":  strconv.FormatUint(contextID, 10),
+		"appid":      strconv.FormatUint(uint64(appID), 10),
 	})
 }
 
 func (t *Trade) SetReady(ready bool) (*Status, error) {
-	return t.postWithStatus(t.baseUrl+"toggleready", map[string]string{
-		"sessionid": t.sessionId,
+	return t.postWithStatus(t.baseURL+"toggleready", map[string]string{
+		"sessionid": t.sessionID,
 		"version":   strconv.FormatUint(uint64(t.Version), 10),
 		"ready":     fmt.Sprint(ready),
 	})
 }
 
 func (t *Trade) Confirm() (*Status, error) {
-	return t.postWithStatus(t.baseUrl+"confirm", map[string]string{
-		"sessionid": t.sessionId,
+	return t.postWithStatus(t.baseURL+"confirm", map[string]string{
+		"sessionid": t.sessionID,
 		"version":   strconv.FormatUint(uint64(t.Version), 10),
 	})
 }
 
 func (t *Trade) Cancel() (*Status, error) {
-	return t.postWithStatus(t.baseUrl+"cancel", map[string]string{
-		"sessionid": t.sessionId,
+	return t.postWithStatus(t.baseURL+"cancel", map[string]string{
+		"sessionid": t.sessionID,
 	})
 }
 

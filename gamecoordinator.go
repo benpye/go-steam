@@ -60,7 +60,7 @@ func (g *GameCoordinator) Write(msg gamecoordinator.IGCMsg) {
 
 	g.client.Write(protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientToGC, &steam.CMsgGCClient{
 		Msgtype: proto.Uint32(msgType),
-		Appid:   proto.Uint32(msg.GetAppId()),
+		Appid:   proto.Uint32(msg.GetAppID()),
 		Payload: buf.Bytes(),
 	}))
 }
