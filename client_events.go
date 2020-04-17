@@ -10,7 +10,9 @@ type FatalErrorEvent error
 
 type ConnectedEvent struct{}
 
-type DisconnectedEvent struct{}
+type DisconnectedEvent struct {
+	UserRequested bool
+}
 
 // A list of connection manager addresses to connect to in the future.
 // You should always save them and then select one of these

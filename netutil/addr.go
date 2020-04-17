@@ -4,6 +4,8 @@ import (
 	"net"
 	"strconv"
 	"strings"
+
+	"github.com/benpye/go-steam/protocol/protobuf/steam"
 )
 
 // An addr that is neither restricted to TCP nor UDP, but has an IP and a port.
@@ -40,4 +42,21 @@ func (p *PortAddr) ToUDPAddr() *net.UDPAddr {
 
 func (p *PortAddr) String() string {
 	return p.IP.String() + ":" + strconv.FormatUint(uint64(p.Port), 10)
+}
+
+func ReadIPv4(ip uint32) net.IP {
+	r := make(net.IP, 4)
+	r[3] = byte(ip)
+	r[2] = byte(ip >> 8)
+	r[1] = byte(ip >> 16)
+	r[0] = byte(ip >> 24)
+	return r
+}
+
+func ParseIPAddress(addr *steam.CMsgIPAddress) net.IP {
+	if addr.GetV6() != nil {
+		return addr.GetV6()
+	}
+
+	return ReadIPv4(addr.GetV4())
 }

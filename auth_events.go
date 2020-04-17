@@ -1,6 +1,10 @@
 package steam
 
 import (
+	"net"
+	"time"
+
+	"github.com/benpye/go-steam/protocol/protobuf/steam"
 	"github.com/benpye/go-steam/protocol/steamlang"
 	"github.com/benpye/go-steam/steamid"
 )
@@ -10,24 +14,21 @@ type LoggedOnEvent struct {
 	ExtendedResult            steamlang.EResult
 	OutOfGameSecsPerHeartbeat int32
 	InGameSecsPerHeartbeat    int32
-	PublicIP                  uint32
-	ServerTime                uint32
+	PublicIP                  net.IP
+	ServerTime                time.Time
 	AccountFlags              steamlang.EAccountFlags
 	ClientSteamID             steamid.SteamID `json:",string"`
 	EmailDomain               string
 	CellID                    uint32
 	CellIDPingThreshold       uint32
 	Steam2Ticket              []byte
-	UsePics                   bool
+	UsePICS                   bool
 	WebAPIUserNonce           string
 	IPCountryCode             string
 	VanityURL                 string
 	NumLoginFailuresToMigrate int32
 	NumDisconnectsToMigrate   int32
-}
-
-type LogOnFailedEvent struct {
-	Result steamlang.EResult
+	ParentalSettings          *steam.ParentalSettings
 }
 
 type LoginKeyEvent struct {

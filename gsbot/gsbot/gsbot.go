@@ -50,6 +50,9 @@ func main() {
 			fmt.Printf("Error: %v", e)
 		case *steam.LoggedOnEvent:
 			client.Social.SetPersonaState(steamlang.EPersonaState_Online)
+		case *steam.DisconnectedEvent:
+			fmt.Printf("Disconnected, user requested: %v", e.UserRequested)
+			return
 		}
 	}
 }

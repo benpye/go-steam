@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -22,7 +23,7 @@ var steamDirectoryCache *steamDirectory = &steamDirectory{}
 
 type steamDirectory struct {
 	sync.RWMutex
-	servers       []string
+	servers       []netutil.PortAddr
 	isInitialized bool
 }
 
@@ -30,6 +31,23 @@ type steamDirectory struct {
 func (sd *steamDirectory) Initialize() error {
 	sd.Lock()
 	defer sd.Unlock()
+
+	// First try using web API to get CM list
+	err := sd.getServerList()
+	if err != nil {
+		// Failing this attempt to use DNS
+		err = sd.getServerListDNS()
+
+		if err != nil {
+			return err
+		}
+	}
+
+	sd.isInitialized = true
+	return nil
+}
+
+func (sd *steamDirectory) getServerList() error {
 	client := new(http.Client)
 	resp, err := client.Get(fmt.Sprintf("https://api.steampowered.com/ISteamDirectory/GetCMList/v1/?cellId=0"))
 	if err != nil {
@@ -52,8 +70,34 @@ func (sd *steamDirectory) Initialize() error {
 	if len(r.Response.ServerList) == 0 {
 		return fmt.Errorf("steam returned zero servers for steam directory request")
 	}
-	sd.servers = r.Response.ServerList
-	sd.isInitialized = true
+
+	sd.servers = make([]netutil.PortAddr, 0, len(r.Response.ServerList))
+
+	for _, server := range r.Response.ServerList {
+		addr := netutil.ParsePortAddr(server)
+		if addr != nil {
+			sd.servers = append(sd.servers, *addr)
+		}
+	}
+
+	return nil
+}
+
+func (sd *steamDirectory) getServerListDNS() error {
+	iplist, err := net.LookupIP("cm0.steampowered.com")
+	if err != nil {
+		return err
+	}
+
+	sd.servers = make([]netutil.PortAddr, 0, len(iplist))
+
+	for _, ip := range iplist {
+		sd.servers = append(sd.servers, netutil.PortAddr{
+			IP:   ip,
+			Port: 27017,
+		})
+	}
+
 	return nil
 }
 
@@ -64,8 +108,7 @@ func (sd *steamDirectory) GetRandomCM() *netutil.PortAddr {
 		panic("steam directory is not initialized")
 	}
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
-	addr := netutil.ParsePortAddr(sd.servers[rng.Int31n(int32(len(sd.servers)))])
-	return addr
+	return &sd.servers[rng.Int31n(int32(len(sd.servers)))]
 }
 
 func (sd *steamDirectory) IsInitialized() bool {

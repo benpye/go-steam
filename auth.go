@@ -5,6 +5,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/benpye/go-steam/netutil"
 	"github.com/benpye/go-steam/protocol"
 	"github.com/benpye/go-steam/protocol/protobuf/steam"
 	"github.com/benpye/go-steam/protocol/steamlang"
@@ -113,35 +114,35 @@ func (a *Auth) handleLogOnResponse(packet *protocol.Packet) {
 		a.client.Web.webLoginKey = *body.WebapiAuthenticateUserNonce
 
 		go a.client.heartbeatLoop(time.Duration(body.GetOutOfGameHeartbeatSeconds()))
-
-		a.client.Emit(&LoggedOnEvent{
-			Result:                    steamlang.EResult(body.GetEresult()),
-			ExtendedResult:            steamlang.EResult(body.GetEresultExtended()),
-			OutOfGameSecsPerHeartbeat: body.GetOutOfGameHeartbeatSeconds(),
-			InGameSecsPerHeartbeat:    body.GetInGameHeartbeatSeconds(),
-			PublicIP:                  body.GetDeprecatedPublicIp(),
-			ServerTime:                body.GetRtime32ServerTime(),
-			AccountFlags:              steamlang.EAccountFlags(body.GetAccountFlags()),
-			ClientSteamID:             steamid.SteamID(body.GetClientSuppliedSteamid()),
-			EmailDomain:               body.GetEmailDomain(),
-			CellID:                    body.GetCellId(),
-			CellIDPingThreshold:       body.GetCellIdPingThreshold(),
-			Steam2Ticket:              body.GetSteam2Ticket(),
-			UsePics:                   body.GetUsePics(),
-			WebAPIUserNonce:           body.GetWebapiAuthenticateUserNonce(),
-			IPCountryCode:             body.GetIpCountryCode(),
-			VanityURL:                 body.GetVanityUrl(),
-			NumLoginFailuresToMigrate: body.GetCountLoginfailuresToMigrate(),
-			NumDisconnectsToMigrate:   body.GetCountDisconnectsToMigrate(),
-		})
-	} else if result == steamlang.EResult_Fail || result == steamlang.EResult_ServiceUnavailable || result == steamlang.EResult_TryAnotherCM {
-		// some error on Steam's side, we'll get an EOF later
-	} else {
-		a.client.Emit(&LogOnFailedEvent{
-			Result: steamlang.EResult(body.GetEresult()),
-		})
-		a.client.Disconnect()
 	}
+
+	var parentalSettings *steam.ParentalSettings
+	if body.GetParentalSettings() != nil {
+		parentalSettings = new(steam.ParentalSettings)
+		proto.Unmarshal(body.GetParentalSettings(), parentalSettings)
+	}
+
+	a.client.Emit(&LoggedOnEvent{
+		Result:                    steamlang.EResult(body.GetEresult()),
+		ExtendedResult:            steamlang.EResult(body.GetEresultExtended()),
+		OutOfGameSecsPerHeartbeat: body.GetOutOfGameHeartbeatSeconds(),
+		InGameSecsPerHeartbeat:    body.GetInGameHeartbeatSeconds(),
+		PublicIP:                  netutil.ParseIPAddress(body.GetPublicIp()),
+		ServerTime:                time.Unix(int64(body.GetRtime32ServerTime()), 0),
+		AccountFlags:              steamlang.EAccountFlags(body.GetAccountFlags()),
+		ClientSteamID:             steamid.SteamID(body.GetClientSuppliedSteamid()),
+		EmailDomain:               body.GetEmailDomain(),
+		CellID:                    body.GetCellId(),
+		CellIDPingThreshold:       body.GetCellIdPingThreshold(),
+		Steam2Ticket:              body.GetSteam2Ticket(),
+		UsePICS:                   body.GetUsePics(),
+		WebAPIUserNonce:           body.GetWebapiAuthenticateUserNonce(),
+		IPCountryCode:             body.GetIpCountryCode(),
+		VanityURL:                 body.GetVanityUrl(),
+		NumLoginFailuresToMigrate: body.GetCountLoginfailuresToMigrate(),
+		NumDisconnectsToMigrate:   body.GetCountDisconnectsToMigrate(),
+		ParentalSettings:          parentalSettings,
+	})
 }
 
 func (a *Auth) handleLoginKey(packet *protocol.Packet) {

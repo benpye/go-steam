@@ -93,7 +93,7 @@ func (c *Client) Emit(event interface{}) {
 // Emits a FatalErrorEvent formatted with fmt.Errorf and disconnects.
 func (c *Client) Fatalf(format string, a ...interface{}) {
 	c.Emit(FatalErrorEvent(fmt.Errorf(format, a...)))
-	c.Disconnect()
+	c.disconnect(false)
 }
 
 // Emits an error formatted with fmt.Errorf.
@@ -136,13 +136,13 @@ func (c *Client) Connect() *netutil.PortAddr {
 
 	// try to initialize the directory cache
 	if !steamDirectoryCache.IsInitialized() {
-		_ = steamDirectoryCache.Initialize()
+		err := steamDirectoryCache.Initialize()
+		if err != nil {
+			c.Fatalf("could not find CM, %+v", err)
+		}
 	}
-	if steamDirectoryCache.IsInitialized() {
-		server = steamDirectoryCache.GetRandomCM()
-	} else {
-		server = GetRandomCM()
-	}
+
+	server = steamDirectoryCache.GetRandomCM()
 
 	c.ConnectTo(server)
 	return server
@@ -158,7 +158,7 @@ func (c *Client) ConnectTo(addr *netutil.PortAddr) {
 // Connects to a specific server, and binds to a specified local IP
 // If this client is already connected, it is disconnected first.
 func (c *Client) ConnectToBind(addr *netutil.PortAddr, local *net.TCPAddr) {
-	c.Disconnect()
+	c.disconnect(false)
 
 	conn, err := dialTCP(local, addr.ToTCPAddr())
 	if err != nil {
@@ -173,6 +173,10 @@ func (c *Client) ConnectToBind(addr *netutil.PortAddr, local *net.TCPAddr) {
 }
 
 func (c *Client) Disconnect() {
+	c.disconnect(true)
+}
+
+func (c *Client) disconnect(userRequested bool) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -186,7 +190,9 @@ func (c *Client) Disconnect() {
 		c.heartbeat.Stop()
 	}
 	close(c.writeChan)
-	c.Emit(&DisconnectedEvent{})
+	c.Emit(&DisconnectedEvent{
+		UserRequested: userRequested,
+	})
 
 }
 
@@ -219,11 +225,13 @@ func (c *Client) readLoop() {
 		packet, err := conn.Read()
 
 		if err != nil {
-			c.Fatalf("Error reading from the connection: %v", err)
-			return
+			// Failed to read - connection closed?
+			break
 		}
 		c.handlePacket(packet)
 	}
+
+	c.disconnect(false)
 }
 
 func (c *Client) writeLoop() {
@@ -252,8 +260,9 @@ func (c *Client) writeLoop() {
 		c.writeBuf.Reset()
 
 		if err != nil {
-			c.Fatalf("Error writing message %v: %v", msg, err)
-			return
+			// Failed to write - connection closed?
+			// We don't disconnect here - the read side will handle it
+			break
 		}
 	}
 }
@@ -371,19 +380,10 @@ func (c *Client) handleClientCMList(packet *protocol.Packet) {
 	l := make([]*netutil.PortAddr, 0)
 	for i, ip := range body.GetCmAddresses() {
 		l = append(l, &netutil.PortAddr{
-			IP:   readIP(ip),
+			IP:   netutil.ReadIPv4(ip),
 			Port: uint16(body.GetCmPorts()[i]),
 		})
 	}
 
 	c.Emit(&ClientCMListEvent{l})
-}
-
-func readIP(ip uint32) net.IP {
-	r := make(net.IP, 4)
-	r[3] = byte(ip)
-	r[2] = byte(ip >> 8)
-	r[1] = byte(ip >> 16)
-	r[0] = byte(ip >> 24)
-	return r
 }
