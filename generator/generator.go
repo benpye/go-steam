@@ -5,6 +5,7 @@ package main
 
 import (
 	"encoding/csv"
+	"flag"
 	"io"
 	"io/ioutil"
 	"os"
@@ -13,32 +14,37 @@ import (
 	"strings"
 )
 
-var printCommands = true
+var clean = flag.Bool("clean", true, "Clean output before generating")
+var steamLang = flag.Bool("steamlang", true, "Generate Steam language files")
+var protobufs = flag.Bool("proto", true, "Generate protobufs")
+var verbose = flag.Bool("verbose", false, "Verbose output")
 
 func main() {
-	args := strings.Join(os.Args[1:], " ")
+	validInput := false
+	flag.Parse()
 
-	found := false
-	if strings.Contains(args, "clean") {
-		clean()
-		found = true
+	if *clean {
+		cleanOutput()
+		validInput = true
 	}
-	if strings.Contains(args, "steamlang") {
+
+	if *steamLang {
 		buildSteamLanguage()
-		found = true
-	}
-	if strings.Contains(args, "proto") {
-		buildProto()
-		found = true
+		validInput = true
 	}
 
-	if !found {
-		os.Stderr.WriteString("Invalid target!\nAvailable targets: clean, proto, steamlang\n")
+	if *protobufs {
+		buildProto()
+		validInput = true
+	}
+
+	if !validInput {
+		flag.PrintDefaults()
 		os.Exit(1)
 	}
 }
 
-func clean() {
+func cleanOutput() {
 	print("# Cleaning")
 	os.RemoveAll("../protocol/protobuf")
 
@@ -189,7 +195,7 @@ func (w *quotedWriter) Write(p []byte) (n int, err error) {
 }
 
 func execute(command string, args ...string) {
-	if printCommands {
+	if *verbose {
 		print(command + " " + strings.Join(args, " "))
 	}
 	cmd := exec.Command(command, args...)
