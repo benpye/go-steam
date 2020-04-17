@@ -89,7 +89,7 @@ func (a *Auth) HandleEvent(event interface{}) {
 	case *steam.ConnectedEvent:
 		a.LogOn(a.details)
 	case *steam.LoggedOnEvent:
-		a.bot.Log.Printf("Logged on (%v) with SteamId %v and account flags %v", e.Result, e.ClientSteamId, e.AccountFlags)
+		a.bot.Log.Printf("Logged on (%v) with SteamId %v and account flags %v", e.Result, e.ClientSteamID, e.AccountFlags)
 	case *steam.MachineAuthUpdateEvent:
 		a.machineAuthHash = e.Hash
 		err := ioutil.WriteFile(a.sentryPath, e.Hash, 0666)

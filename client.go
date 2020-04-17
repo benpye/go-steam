@@ -29,10 +29,10 @@ import (
 // Other errors don't have any effect.
 type Client struct {
 	// these need to be 64 bit aligned for sync/atomic on 32bit
-	sessionId    int32
+	sessionID    int32
 	_            uint32
-	steamId      uint64
-	currentJobId uint64
+	steamID      uint64
+	currentJobID uint64
 
 	Auth          *Auth
 	Social        *Social
@@ -108,16 +108,16 @@ func (c *Client) RegisterPacketHandler(handler PacketHandler) {
 	c.handlers = append(c.handlers, handler)
 }
 
-func (c *Client) GetNextJobId() protocol.JobId {
-	return protocol.JobId(atomic.AddUint64(&c.currentJobId, 1))
+func (c *Client) GetNextJobID() protocol.JobId {
+	return protocol.JobId(atomic.AddUint64(&c.currentJobID, 1))
 }
 
-func (c *Client) SteamId() steamid.SteamId {
-	return steamid.SteamId(atomic.LoadUint64(&c.steamId))
+func (c *Client) SteamID() steamid.SteamId {
+	return steamid.SteamId(atomic.LoadUint64(&c.steamID))
 }
 
-func (c *Client) SessionId() int32 {
-	return atomic.LoadInt32(&c.sessionId)
+func (c *Client) SessionID() int32 {
+	return atomic.LoadInt32(&c.sessionID)
 }
 
 func (c *Client) Connected() bool {
@@ -196,8 +196,8 @@ func (c *Client) Disconnect() {
 // Writes to this client when not connected are ignored.
 func (c *Client) Write(msg protocol.IMsg) {
 	if cm, ok := msg.(protocol.IClientMsg); ok {
-		cm.SetSessionId(c.SessionId())
-		cm.SetSteamId(c.SteamId())
+		cm.SetSessionId(c.SessionID())
+		cm.SetSteamId(c.SteamID())
 	}
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
@@ -371,15 +371,15 @@ func (c *Client) handleClientCMList(packet *protocol.Packet) {
 	l := make([]*netutil.PortAddr, 0)
 	for i, ip := range body.GetCmAddresses() {
 		l = append(l, &netutil.PortAddr{
-			readIp(ip),
-			uint16(body.GetCmPorts()[i]),
+			IP:   readIP(ip),
+			Port: uint16(body.GetCmPorts()[i]),
 		})
 	}
 
 	c.Emit(&ClientCMListEvent{l})
 }
 
-func readIp(ip uint32) net.IP {
+func readIP(ip uint32) net.IP {
 	r := make(net.IP, 4)
 	r[3] = byte(ip)
 	r[2] = byte(ip >> 8)

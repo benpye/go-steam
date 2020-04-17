@@ -6,12 +6,12 @@ import (
 )
 
 type TradeProposedEvent struct {
-	RequestId TradeRequestId
+	RequestID TradeRequestID
 	Other     steamid.SteamId `json:",string"`
 }
 
 type TradeResultEvent struct {
-	RequestId TradeRequestId
+	RequestID TradeRequestID
 	Response  steamlang.EEconTradeResponse
 	Other     steamid.SteamId `json:",string"`
 	// Number of days Steam Guard is required to have been active

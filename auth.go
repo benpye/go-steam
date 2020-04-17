@@ -76,7 +76,7 @@ func (a *Auth) LogOn(details *LogOnDetails) {
 		logon.ShouldRememberPassword = proto.Bool(details.ShouldRememberPassword)
 	}
 
-	atomic.StoreUint64(&a.client.steamId, uint64(steamid.NewIdAdv(0, 1, int32(steamlang.EUniverse_Public), int32(steamlang.EAccountType_Individual))))
+	atomic.StoreUint64(&a.client.steamID, uint64(steamid.NewIdAdv(0, 1, int32(steamlang.EUniverse_Public), int32(steamlang.EAccountType_Individual))))
 
 	a.client.Write(protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientLogon, logon))
 }
@@ -108,8 +108,8 @@ func (a *Auth) handleLogOnResponse(packet *protocol.Packet) {
 
 	result := steamlang.EResult(body.GetEresult())
 	if result == steamlang.EResult_OK {
-		atomic.StoreInt32(&a.client.sessionId, msg.Header.Proto.GetClientSessionid())
-		atomic.StoreUint64(&a.client.steamId, msg.Header.Proto.GetSteamid())
+		atomic.StoreInt32(&a.client.sessionID, msg.Header.Proto.GetClientSessionid())
+		atomic.StoreUint64(&a.client.steamID, msg.Header.Proto.GetSteamid())
 		a.client.Web.webLoginKey = *body.WebapiAuthenticateUserNonce
 
 		go a.client.heartbeatLoop(time.Duration(body.GetOutOfGameHeartbeatSeconds()))
@@ -119,18 +119,18 @@ func (a *Auth) handleLogOnResponse(packet *protocol.Packet) {
 			ExtendedResult:            steamlang.EResult(body.GetEresultExtended()),
 			OutOfGameSecsPerHeartbeat: body.GetOutOfGameHeartbeatSeconds(),
 			InGameSecsPerHeartbeat:    body.GetInGameHeartbeatSeconds(),
-			PublicIp:                  body.GetDeprecatedPublicIp(),
+			PublicIP:                  body.GetDeprecatedPublicIp(),
 			ServerTime:                body.GetRtime32ServerTime(),
 			AccountFlags:              steamlang.EAccountFlags(body.GetAccountFlags()),
-			ClientSteamId:             steamid.SteamId(body.GetClientSuppliedSteamid()),
+			ClientSteamID:             steamid.SteamId(body.GetClientSuppliedSteamid()),
 			EmailDomain:               body.GetEmailDomain(),
-			CellId:                    body.GetCellId(),
-			CellIdPingThreshold:       body.GetCellIdPingThreshold(),
+			CellID:                    body.GetCellId(),
+			CellIDPingThreshold:       body.GetCellIdPingThreshold(),
 			Steam2Ticket:              body.GetSteam2Ticket(),
 			UsePics:                   body.GetUsePics(),
-			WebApiUserNonce:           body.GetWebapiAuthenticateUserNonce(),
-			IpCountryCode:             body.GetIpCountryCode(),
-			VanityUrl:                 body.GetVanityUrl(),
+			WebAPIUserNonce:           body.GetWebapiAuthenticateUserNonce(),
+			IPCountryCode:             body.GetIpCountryCode(),
+			VanityURL:                 body.GetVanityUrl(),
 			NumLoginFailuresToMigrate: body.GetCountLoginfailuresToMigrate(),
 			NumDisconnectsToMigrate:   body.GetCountDisconnectsToMigrate(),
 		})
@@ -151,7 +151,7 @@ func (a *Auth) handleLoginKey(packet *protocol.Packet) {
 		UniqueId: proto.Uint32(body.GetUniqueId()),
 	}))
 	a.client.Emit(&LoginKeyEvent{
-		UniqueId: body.GetUniqueId(),
+		UniqueID: body.GetUniqueId(),
 		LoginKey: body.GetLoginKey(),
 	})
 }
@@ -194,7 +194,7 @@ func (a *Auth) handleAccountInfo(packet *protocol.Packet) {
 		Country:              body.GetIpCountry(),
 		CountAuthedComputers: body.GetCountAuthedComputers(),
 		AccountFlags:         steamlang.EAccountFlags(body.GetAccountFlags()),
-		FacebookId:           body.GetFacebookId(),
+		FacebookID:           body.GetFacebookId(),
 		FacebookName:         body.GetFacebookName(),
 	})
 }

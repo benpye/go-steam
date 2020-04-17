@@ -55,7 +55,7 @@ func (c *tcpConnection) Read() (*protocol.Packet, error) {
 		return nil, err
 	}
 	if packetMagic != tcpConnectionMagic {
-		return nil, fmt.Errorf("Invalid connection magic! Expected %d, got %d!", tcpConnectionMagic, packetMagic)
+		return nil, fmt.Errorf("invalid connection magic, expected %d, got %d", tcpConnectionMagic, packetMagic)
 	}
 
 	buf := make([]byte, packetLen, packetLen)

@@ -66,11 +66,11 @@ func (g *GameCoordinator) Write(msg gamecoordinator.IGCMsg) {
 }
 
 // Sets you in the given games. Specify none to quit all games.
-func (g *GameCoordinator) SetGamesPlayed(appIds ...uint64) {
+func (g *GameCoordinator) SetGamesPlayed(appIDs ...uint64) {
 	games := make([]*steam.CMsgClientGamesPlayed_GamePlayed, 0)
-	for _, appId := range appIds {
+	for _, appID := range appIDs {
 		games = append(games, &steam.CMsgClientGamesPlayed_GamePlayed{
-			GameId: proto.Uint64(appId),
+			GameId: proto.Uint64(appID),
 		})
 	}
 

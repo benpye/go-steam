@@ -13,3 +13,6 @@
 
 # Steam sentry file
 sentry.bin
+
+# Steam server list
+serverlist.json

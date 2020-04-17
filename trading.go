@@ -19,7 +19,7 @@ type Trading struct {
 	client *Client
 }
 
-type TradeRequestId uint32
+type TradeRequestID uint32
 
 func (t *Trading) HandlePacket(packet *protocol.Packet) {
 	switch packet.EMsg {
@@ -27,14 +27,14 @@ func (t *Trading) HandlePacket(packet *protocol.Packet) {
 		msg := new(steam.CMsgTrading_InitiateTradeRequest)
 		packet.ReadProtoMsg(msg)
 		t.client.Emit(&TradeProposedEvent{
-			RequestId: TradeRequestId(msg.GetTradeRequestId()),
+			RequestID: TradeRequestID(msg.GetTradeRequestId()),
 			Other:     steamid.SteamId(msg.GetOtherSteamid()),
 		})
 	case steamlang.EMsg_EconTrading_InitiateTradeResult:
 		msg := new(steam.CMsgTrading_InitiateTradeResponse)
 		packet.ReadProtoMsg(msg)
 		t.client.Emit(&TradeResultEvent{
-			RequestId: TradeRequestId(msg.GetTradeRequestId()),
+			RequestID: TradeRequestID(msg.GetTradeRequestId()),
 			Response:  steamlang.EEconTradeResponse(msg.GetResponse()),
 			Other:     steamid.SteamId(msg.GetOtherSteamid()),
 
@@ -61,7 +61,7 @@ func (t *Trading) RequestTrade(other steamid.SteamId) {
 }
 
 // Responds to a TradeProposedEvent.
-func (t *Trading) RespondRequest(requestId TradeRequestId, accept bool) {
+func (t *Trading) RespondRequest(requestID TradeRequestID, accept bool) {
 	var resp uint32
 	if accept {
 		resp = 0
@@ -70,7 +70,7 @@ func (t *Trading) RespondRequest(requestId TradeRequestId, accept bool) {
 	}
 
 	t.client.Write(protocol.NewClientMsgProtobuf(steamlang.EMsg_EconTrading_InitiateTradeResponse, &steam.CMsgTrading_InitiateTradeResponse{
-		TradeRequestId: proto.Uint32(uint32(requestId)),
+		TradeRequestId: proto.Uint32(uint32(requestID)),
 		Response:       proto.Uint32(resp),
 	}))
 }

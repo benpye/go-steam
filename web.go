@@ -26,7 +26,7 @@ type Web struct {
 	// This cookie may contain a characters that will need to be URL-escaped, otherwise
 	// Steam (probably) interprets is as a string.
 	// When used as an URL paramter this is automatically escaped by the Go HTTP package.
-	SessionId string
+	SessionID string
 	// The `steamLogin` cookie required to use the steam website. Already URL-escaped.
 	// This is only available after calling LogOn().
 	SteamLogin string
@@ -80,7 +80,7 @@ func (w *Web) apiLogOn() error {
 	cryptedLoginKey := cryptoutil.SymmetricEncrypt(ciph, []byte(w.webLoginKey))
 	data := make(url.Values)
 	data.Add("format", "json")
-	data.Add("steamid", strconv.FormatUint(w.client.SteamId().ToUint64(), 10))
+	data.Add("steamid", strconv.FormatUint(w.client.SteamID().ToUint64(), 10))
 	data.Add("sessionkey", string(cryptedSessionKey))
 	data.Add("encrypted_loginkey", string(cryptedLoginKey))
 	resp, err := http.PostForm("https://api.steampowered.com/ISteamUserAuth/AuthenticateUser/v0001", data)
@@ -125,9 +125,9 @@ func (w *Web) handleNewLoginKey(packet *protocol.Packet) {
 	}))
 
 	// number -> string -> bytes -> base64
-	w.SessionId = base64.StdEncoding.EncodeToString([]byte(strconv.FormatUint(uint64(msg.GetUniqueId()), 10)))
+	w.SessionID = base64.StdEncoding.EncodeToString([]byte(strconv.FormatUint(uint64(msg.GetUniqueId()), 10)))
 
-	w.client.Emit(new(WebSessionIdEvent))
+	w.client.Emit(new(WebSessionIDEvent))
 }
 
 func (w *Web) handleAuthNonceResponse(packet *protocol.Packet) {
