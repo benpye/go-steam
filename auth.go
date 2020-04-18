@@ -39,9 +39,9 @@ type LogOnDetails struct {
 	ShouldRememberPassword bool
 }
 
-// Log on with the given details. You must always specify username and
+// LogOn logs on to Steam with the given details. You must always specify username and
 // password OR username and loginkey. For the first login, don't set an authcode or a hash and you'll
-//  receive an error (EResult_AccountLogonDenied)
+// receive an error (EResult_AccountLogonDenied)
 // and Steam will send you an authcode. Then you have to login again, this time with the authcode.
 // Shortly after logging in, you'll receive a MachineAuthUpdateEvent with a hash which allows
 // you to login without using an authcode in the future.
@@ -82,18 +82,39 @@ func (a *Auth) LogOn(details *LogOnDetails) {
 	a.client.Write(protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientLogon, logOn))
 }
 
+// LogOff logs off of Steam cleanly and disconnects.
 func (a *Auth) LogOff() {
 	logOff := new(steam.CMsgClientLogOff)
 	a.client.disconnectExpected = true
 	a.client.Write(protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientLogOff, logOff))
 }
 
+// AcceptNewLoginKey accepts a new login key from a LoginKeyEvent.
+func (a *Auth) AcceptNewLoginKey(event *LoginKeyEvent) {
+	a.client.Write(protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientNewLoginKeyAccepted, &steam.CMsgClientNewLoginKeyAccepted{
+		UniqueId: proto.Uint32(event.UniqueID),
+	}))
+}
+
+// RequestWebAPIUserNonce requests a nonce to authenticate the user against the web API.
+func (a *Auth) RequestWebAPIUserNonce() *AsyncJob {
+	requestNonce := new(steam.CMsgClientRequestWebAPIAuthenticateUserNonce)
+	msg := protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientRequestWebAPIAuthenticateUserNonce, requestNonce)
+
+	job := a.client.JobManager.NewJob()
+	msg.SetSourceJobID(job.JobID)
+	a.client.Write(msg)
+
+	return job
+}
+
+// HandlePacket recieves all packets from the Steam3 network.
 func (a *Auth) HandlePacket(packet *protocol.Packet) {
 	switch packet.EMsg {
 	case steamlang.EMsg_ClientLogOnResponse:
 		a.handleLogOnResponse(packet)
 	case steamlang.EMsg_ClientNewLoginKey:
-		a.handleLoginKey(packet)
+		a.handleNewLoginKey(packet)
 	case steamlang.EMsg_ClientSessionToken:
 	case steamlang.EMsg_ClientLoggedOff:
 		a.handleLoggedOff(packet)
@@ -101,6 +122,8 @@ func (a *Auth) HandlePacket(packet *protocol.Packet) {
 		a.handleUpdateMachineAuth(packet)
 	case steamlang.EMsg_ClientAccountInfo:
 		a.handleAccountInfo(packet)
+	case steamlang.EMsg_ClientRequestWebAPIAuthenticateUserNonceResponse:
+		a.handleAuthNonceResponse(packet)
 	}
 }
 
@@ -119,7 +142,6 @@ func (a *Auth) handleLogOnResponse(packet *protocol.Packet) {
 
 		atomic.StoreInt32(&a.client.sessionID, msg.Header.Proto.GetClientSessionid())
 		atomic.StoreUint64(&a.client.steamID, msg.Header.Proto.GetSteamid())
-		a.client.Web.webLoginKey = *body.WebapiAuthenticateUserNonce
 
 		go a.client.heartbeatLoop(time.Duration(body.GetOutOfGameHeartbeatSeconds()))
 	} else if result == steamlang.EResult_TryAnotherCM || result == steamlang.EResult_ServiceUnavailable {
@@ -155,12 +177,9 @@ func (a *Auth) handleLogOnResponse(packet *protocol.Packet) {
 	})
 }
 
-func (a *Auth) handleLoginKey(packet *protocol.Packet) {
+func (a *Auth) handleNewLoginKey(packet *protocol.Packet) {
 	body := new(steam.CMsgClientNewLoginKey)
 	packet.ReadProtoMsg(body)
-	a.client.Write(protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientNewLoginKeyAccepted, &steam.CMsgClientNewLoginKeyAccepted{
-		UniqueId: proto.Uint32(body.GetUniqueId()),
-	}))
 	a.client.Emit(&LoginKeyEvent{
 		UniqueID: body.GetUniqueId(),
 		LoginKey: body.GetLoginKey(),
@@ -207,5 +226,19 @@ func (a *Auth) handleAccountInfo(packet *protocol.Packet) {
 		AccountFlags:         steamlang.EAccountFlags(body.GetAccountFlags()),
 		FacebookID:           body.GetFacebookId(),
 		FacebookName:         body.GetFacebookName(),
+	})
+}
+
+func (a *Auth) handleAuthNonceResponse(packet *protocol.Packet) {
+	// this has to be the best name for a message yet.
+	msg := new(steam.CMsgClientRequestWebAPIAuthenticateUserNonceResponse)
+	packet.ReadProtoMsg(msg)
+
+	msg.GetTokenType()
+
+	a.client.Emit(&WebAPIUserNonceEvent{
+		JobID:  packet.TargetJobID,
+		Result: steamlang.EResult(msg.GetEresult()),
+		Nonce:  msg.GetWebapiAuthenticateUserNonce(),
 	})
 }

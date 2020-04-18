@@ -4,6 +4,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/benpye/go-steam/protocol"
 	"github.com/benpye/go-steam/protocol/protobuf/steam"
 	"github.com/benpye/go-steam/protocol/steamlang"
 	"github.com/benpye/go-steam/steamid"
@@ -31,17 +32,33 @@ type LoggedOnEvent struct {
 	ParentalSettings          *steam.ParentalSettings
 }
 
+func (e *LoggedOnEvent) GetJobID() protocol.JobID {
+	return 0
+}
+
 type LoginKeyEvent struct {
 	UniqueID uint32
 	LoginKey string
+}
+
+func (e *LoginKeyEvent) GetJobID() protocol.JobID {
+	return 0
 }
 
 type LoggedOffEvent struct {
 	Result steamlang.EResult
 }
 
+func (e *LoggedOffEvent) GetJobID() protocol.JobID {
+	return 0
+}
+
 type MachineAuthUpdateEvent struct {
 	Hash []byte
+}
+
+func (e *MachineAuthUpdateEvent) GetJobID() protocol.JobID {
+	return 0
 }
 
 type AccountInfoEvent struct {
@@ -51,4 +68,18 @@ type AccountInfoEvent struct {
 	AccountFlags         steamlang.EAccountFlags
 	FacebookID           uint64 `json:",string"`
 	FacebookName         string
+}
+
+func (e *AccountInfoEvent) GetJobID() protocol.JobID {
+	return 0
+}
+
+type WebAPIUserNonceEvent struct {
+	JobID  protocol.JobID
+	Result steamlang.EResult
+	Nonce  string
+}
+
+func (e *WebAPIUserNonceEvent) GetJobID() protocol.JobID {
+	return e.JobID
 }

@@ -1,6 +1,7 @@
 package steam
 
 import (
+	"github.com/benpye/go-steam/protocol"
 	"github.com/benpye/go-steam/protocol/steamlang"
 	"github.com/benpye/go-steam/steamid"
 )
@@ -8,6 +9,10 @@ import (
 type TradeProposedEvent struct {
 	RequestID TradeRequestID
 	Other     steamid.SteamID `json:",string"`
+}
+
+func (e *TradeProposedEvent) GetJobID() protocol.JobID {
+	return 0
 }
 
 type TradeResultEvent struct {
@@ -24,6 +29,14 @@ type TradeResultEvent struct {
 	NumDaysPasswordResetProbation uint32
 }
 
+func (e *TradeResultEvent) GetJobID() protocol.JobID {
+	return 0
+}
+
 type TradeSessionStartEvent struct {
 	Other steamid.SteamID `json:",string"`
+}
+
+func (e *TradeSessionStartEvent) GetJobID() protocol.JobID {
+	return 0
 }

@@ -3,15 +3,24 @@ package steam
 import (
 	"time"
 
+	"github.com/benpye/go-steam/protocol"
 	"github.com/benpye/go-steam/protocol/steamlang"
 	"github.com/benpye/go-steam/steamid"
 )
 
 type FriendsListEvent struct{}
 
+func (e *FriendsListEvent) GetJobID() protocol.JobID {
+	return 0
+}
+
 type FriendStateEvent struct {
 	SteamID      steamid.SteamID `json:",string"`
 	Relationship steamlang.EFriendRelationship
+}
+
+func (f *FriendStateEvent) GetJobID() protocol.JobID {
+	return 0
 }
 
 func (f *FriendStateEvent) IsFriend() bool {
@@ -21,6 +30,10 @@ func (f *FriendStateEvent) IsFriend() bool {
 type GroupStateEvent struct {
 	SteamID      steamid.SteamID `json:",string"`
 	Relationship steamlang.EClanRelationship
+}
+
+func (g *GroupStateEvent) GetJobID() protocol.JobID {
+	return 0
 }
 
 func (g *GroupStateEvent) IsMember() bool {
@@ -51,6 +64,10 @@ type PersonaStateEvent struct {
 	PersonaSetByUser       bool
 }
 
+func (e *PersonaStateEvent) GetJobID() protocol.JobID {
+	return 0
+}
+
 // Fired when a clan's state has been changed
 type ClanStateEvent struct {
 	ClanID              steamid.SteamID `json:",string"`
@@ -65,6 +82,10 @@ type ClanStateEvent struct {
 	Announcements       []ClanEventDetails
 }
 
+func (e *ClanStateEvent) GetJobID() protocol.JobID {
+	return 0
+}
+
 type ClanEventDetails struct {
 	ID         uint64 `json:",string"`
 	EventTime  uint32
@@ -73,11 +94,19 @@ type ClanEventDetails struct {
 	JustPosted bool
 }
 
+func (e *ClanEventDetails) GetJobID() protocol.JobID {
+	return 0
+}
+
 // Fired in response to adding a friend to your friends list
 type FriendAddedEvent struct {
 	Result      steamlang.EResult
 	SteamID     steamid.SteamID `json:",string"`
 	PersonaName string
+}
+
+func (e *FriendAddedEvent) GetJobID() protocol.JobID {
+	return 0
 }
 
 // Fired when the client receives a message from either a friend or a chat room
@@ -88,6 +117,10 @@ type ChatMsgEvent struct {
 	EntryType  steamlang.EChatEntryType
 	Timestamp  time.Time
 	Offline    bool
+}
+
+func (e *ChatMsgEvent) GetJobID() protocol.JobID {
+	return 0
 }
 
 // Whether the type is ChatMsg
@@ -107,11 +140,19 @@ type ChatEnterEvent struct {
 	Name          string
 }
 
+func (e *ChatEnterEvent) GetJobID() protocol.JobID {
+	return 0
+}
+
 // Fired in response to a chat member's info being received
 type ChatMemberInfoEvent struct {
 	ChatRoomID      steamid.SteamID `json:",string"`
 	Type            steamlang.EChatInfoType
 	StateChangeInfo StateChangeDetails
+}
+
+func (e *ChatMemberInfoEvent) GetJobID() protocol.JobID {
+	return 0
 }
 
 type StateChangeDetails struct {
@@ -120,12 +161,20 @@ type StateChangeDetails struct {
 	ChatterActedBy steamid.SteamID `json:",string"`
 }
 
+func (e *StateChangeDetails) GetJobID() protocol.JobID {
+	return 0
+}
+
 // Fired when a chat action has completed
 type ChatActionResultEvent struct {
 	ChatRoomID steamid.SteamID `json:",string"`
 	ChatterID  steamid.SteamID `json:",string"`
 	Action     steamlang.EChatAction
 	Result     steamlang.EChatActionResult
+}
+
+func (e *ChatActionResultEvent) GetJobID() protocol.JobID {
+	return 0
 }
 
 // Fired when a chat invite is received
@@ -139,9 +188,17 @@ type ChatInviteEvent struct {
 	GameID       uint64 `json:",string"`
 }
 
+func (e *ChatInviteEvent) GetJobID() protocol.JobID {
+	return 0
+}
+
 // Fired in response to ignoring a friend
 type IgnoreFriendEvent struct {
 	Result steamlang.EResult
+}
+
+func (e *IgnoreFriendEvent) GetJobID() protocol.JobID {
+	return 0
 }
 
 // Fired in response to requesting profile info for a user
@@ -155,4 +212,8 @@ type ProfileInfoEvent struct {
 	CountryName string
 	Headline    string
 	Summary     string
+}
+
+func (e *ProfileInfoEvent) GetJobID() protocol.JobID {
+	return 0
 }

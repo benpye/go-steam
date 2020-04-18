@@ -46,8 +46,8 @@ You can also find a running example in the `gsbot` package.
 
 Events
 
-go-steam emits events that can be read via Client.Events(). Although the channel has the type interface{},
-only types from this package ending with "Event" and errors will be emitted.
+go-steam emits events that can be read via Client.Events(). These will always be the types ending
+Event, implementing the CallbackEvent interface, FatalErrorEvent or error.
 
 */
 package steam

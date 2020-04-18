@@ -23,7 +23,7 @@ import (
 
 var serverList ServerList
 
-// Represents a client to the Steam network.
+// Client represents a client to the Steam network.
 // Always poll events from the channel returned by Events() or receiving messages will stop.
 // All access, unless otherwise noted, should be threadsafe.
 //
@@ -31,17 +31,16 @@ var serverList ServerList
 // Other errors don't have any effect.
 type Client struct {
 	// these need to be 64 bit aligned for sync/atomic on 32bit
-	sessionID    int32
-	_            uint32
-	steamID      uint64
-	currentJobID uint64
+	sessionID int32
+	_         uint32
+	steamID   uint64
 
 	Auth          *Auth
 	Social        *Social
-	Web           *Web
 	Notifications *Notifications
 	Trading       *Trading
 	GC            *GameCoordinator
+	JobManager    *JobManager
 
 	events        chan interface{}
 	handlers      []PacketHandler
@@ -60,21 +59,30 @@ type Client struct {
 	disconnectExpected bool
 }
 
+// CallbackEvent is the interface all client callback events other than errors
+// must implement.
+type CallbackEvent interface {
+	GetJobID() protocol.JobID
+}
+
+// PacketHandler is the packet handler interface that a type must match to
+// be registered as a client packet handler.
 type PacketHandler interface {
 	HandlePacket(*protocol.Packet)
 }
 
+// NewClient creates a new instance of the Steam client type.
 func NewClient() *Client {
 	client := &Client{
 		events:   make(chan interface{}, 3),
 		writeBuf: new(bytes.Buffer),
 	}
+	client.JobManager = newJobManager(client)
+	client.RegisterPacketHandler(client.JobManager)
 	client.Auth = &Auth{client: client}
 	client.RegisterPacketHandler(client.Auth)
 	client.Social = newSocial(client)
 	client.RegisterPacketHandler(client.Social)
-	client.Web = &Web{client: client}
-	client.RegisterPacketHandler(client.Web)
 	client.Notifications = newNotifications(client)
 	client.RegisterPacketHandler(client.Notifications)
 	client.Trading = &Trading{client: client}
@@ -84,53 +92,55 @@ func NewClient() *Client {
 	return client
 }
 
-// Get the event channel. By convention all events are pointers, except for errors.
-// It is never closed.
+// Events gets the event channel. By convention all events are pointers. It is never closed.
 func (c *Client) Events() <-chan interface{} {
 	return c.events
 }
 
+// Emit emits an event to the client events channel.
 func (c *Client) Emit(event interface{}) {
 	c.events <- event
+	if callback, ok := event.(CallbackEvent); ok {
+		c.JobManager.CompleteJob(callback)
+	}
 }
 
-// Emits a FatalErrorEvent formatted with fmt.Errorf and disconnects.
+// Fatalf emits a FatalErrorEvent formatted with fmt.Errorf and disconnects.
 func (c *Client) Fatalf(format string, a ...interface{}) {
 	c.Emit(FatalErrorEvent(fmt.Errorf(format, a...)))
 	c.disconnect(false)
 }
 
-// Emits an error formatted with fmt.Errorf.
+// Errorf emits an ErrorEvent formatted with fmt.Errorf.
 func (c *Client) Errorf(format string, a ...interface{}) {
 	c.Emit(fmt.Errorf(format, a...))
 }
 
-// Registers a PacketHandler that receives all incoming packets.
+// RegisterPacketHandler registers a PacketHandler that receives all incoming packets.
 func (c *Client) RegisterPacketHandler(handler PacketHandler) {
 	c.handlersMutex.Lock()
 	defer c.handlersMutex.Unlock()
 	c.handlers = append(c.handlers, handler)
 }
 
-func (c *Client) GetNextJobID() protocol.JobID {
-	return protocol.JobID(atomic.AddUint64(&c.currentJobID, 1))
-}
-
+// SteamID returns the SteamID for the currently logged on user.
 func (c *Client) SteamID() steamid.SteamID {
 	return steamid.SteamID(atomic.LoadUint64(&c.steamID))
 }
 
+// SessionID returns the current client session ID.
 func (c *Client) SessionID() int32 {
 	return atomic.LoadInt32(&c.sessionID)
 }
 
+// Connected indicates if the client is connected to teh Steam network.
 func (c *Client) Connected() bool {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 	return c.conn != nil
 }
 
-// Connects to a random Steam server and returns its address.
+// Connect Connects to a random Steam server and returns its address.
 // If this client is already connected, it is disconnected first.
 // This method tries to use an address from the Steam Directory and falls
 // back to the built-in server list if the Steam Directory can't be reached.
@@ -145,13 +155,13 @@ func (c *Client) Connect() (*netutil.PortAddr, error) {
 	return server, nil
 }
 
-// Connects to a specific server.
+// ConnectTo connects to a specific server.
 // If this client is already connected, it is disconnected first.
 func (c *Client) ConnectTo(addr *netutil.PortAddr) {
 	c.ConnectToBind(addr, nil)
 }
 
-// Connects to a specific server, and binds to a specified local IP
+// ConnectToBind connects to a specific server, and binds to a specified local IP
 // If this client is already connected, it is disconnected first.
 func (c *Client) ConnectToBind(addr *netutil.PortAddr, local *net.TCPAddr) {
 	c.disconnect(false)
@@ -200,8 +210,8 @@ func (c *Client) disconnect(userRequested bool) {
 
 }
 
-// Adds a message to the send queue. Modifications to the given message after
-// writing are not allowed (possible race conditions).
+// Write adds a message to the send queue. Modifications to the given message
+// after writing are not allowed (possible race conditions).
 //
 // Writes to this client when not connected are ignored.
 func (c *Client) Write(msg protocol.IMsg) {
