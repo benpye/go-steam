@@ -58,28 +58,34 @@ func (a *Auth) LogOn(details *LogOnDetails) {
 		panic("Password or LoginKey must be set!")
 	}
 
-	logon := new(steam.CMsgClientLogon)
-	logon.AccountName = &details.Username
-	logon.Password = &details.Password
+	logOn := new(steam.CMsgClientLogon)
+	logOn.AccountName = &details.Username
+	logOn.Password = &details.Password
 	if details.AuthCode != "" {
-		logon.AuthCode = proto.String(details.AuthCode)
+		logOn.AuthCode = proto.String(details.AuthCode)
 	}
 	if details.TwoFactorCode != "" {
-		logon.TwoFactorCode = proto.String(details.TwoFactorCode)
+		logOn.TwoFactorCode = proto.String(details.TwoFactorCode)
 	}
-	logon.ClientLanguage = proto.String("english")
-	logon.ProtocolVersion = proto.Uint32(steamlang.MsgClientLogon_CurrentProtocol)
-	logon.ShaSentryfile = details.SentryFileHash
+	logOn.ClientLanguage = proto.String("english")
+	logOn.ProtocolVersion = proto.Uint32(steamlang.MsgClientLogon_CurrentProtocol)
+	logOn.ShaSentryfile = details.SentryFileHash
 	if details.LoginKey != "" {
-		logon.LoginKey = proto.String(details.LoginKey)
+		logOn.LoginKey = proto.String(details.LoginKey)
 	}
 	if details.ShouldRememberPassword {
-		logon.ShouldRememberPassword = proto.Bool(details.ShouldRememberPassword)
+		logOn.ShouldRememberPassword = proto.Bool(details.ShouldRememberPassword)
 	}
 
 	atomic.StoreUint64(&a.client.steamID, uint64(steamid.NewIDAdv(0, 1, int32(steamlang.EUniverse_Public), int32(steamlang.EAccountType_Individual))))
 
-	a.client.Write(protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientLogon, logon))
+	a.client.Write(protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientLogon, logOn))
+}
+
+func (a *Auth) LogOff() {
+	logOff := new(steam.CMsgClientLogOff)
+	a.client.disconnectExpected = true
+	a.client.Write(protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientLogOff, logOff))
 }
 
 func (a *Auth) HandlePacket(packet *protocol.Packet) {
@@ -109,11 +115,15 @@ func (a *Auth) handleLogOnResponse(packet *protocol.Packet) {
 
 	result := steamlang.EResult(body.GetEresult())
 	if result == steamlang.EResult_OK {
+		serverList.UpdateServerState(a.client.currentServer, ServerStateGood)
+
 		atomic.StoreInt32(&a.client.sessionID, msg.Header.Proto.GetClientSessionid())
 		atomic.StoreUint64(&a.client.steamID, msg.Header.Proto.GetSteamid())
 		a.client.Web.webLoginKey = *body.WebapiAuthenticateUserNonce
 
 		go a.client.heartbeatLoop(time.Duration(body.GetOutOfGameHeartbeatSeconds()))
+	} else if result == steamlang.EResult_TryAnotherCM || result == steamlang.EResult_ServiceUnavailable {
+		serverList.UpdateServerState(a.client.currentServer, ServerStateBad)
 	}
 
 	var parentalSettings *steam.ParentalSettings

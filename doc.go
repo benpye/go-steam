@@ -26,7 +26,7 @@ You can also find a running example in the `gsbot` package.
 		myLoginInfo.Password = "Your password"
 
 		client := steam.NewClient()
-		client.Connect()
+		_ = client.Connect()
 		for event := range client.Events() {
 			switch e := event.(type) {
 			case *steam.ConnectedEvent:

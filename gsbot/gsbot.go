@@ -135,8 +135,8 @@ func (s *ServerList) ConnectBind(laddr *net.TCPAddr) (bool, error) {
 	d, err := ioutil.ReadFile(s.listPath)
 	if err != nil {
 		s.bot.Log.Println("Connecting to random server.")
-		s.bot.Client.Connect()
-		return false, nil
+		_, err = s.bot.Client.Connect()
+		return false, err
 	}
 	var addrs []*netutil.PortAddr
 	err = json.Unmarshal(d, &addrs)

@@ -21,6 +21,8 @@ import (
 	"github.com/benpye/go-steam/steamid"
 )
 
+var serverList ServerList
+
 // Represents a client to the Steam network.
 // Always poll events from the channel returned by Events() or receiving messages will stop.
 // All access, unless otherwise noted, should be threadsafe.
@@ -49,11 +51,13 @@ type Client struct {
 
 	ConnectionTimeout time.Duration
 
-	mutex     sync.RWMutex // guarding conn and writeChan
-	conn      connection
-	writeChan chan protocol.IMsg
-	writeBuf  *bytes.Buffer
-	heartbeat *time.Ticker
+	mutex              sync.RWMutex // guarding conn and writeChan
+	conn               connection
+	currentServer      *netutil.PortAddr
+	writeChan          chan protocol.IMsg
+	writeBuf           *bytes.Buffer
+	heartbeat          *time.Ticker
+	disconnectExpected bool
 }
 
 type PacketHandler interface {
@@ -131,25 +135,17 @@ func (c *Client) Connected() bool {
 // This method tries to use an address from the Steam Directory and falls
 // back to the built-in server list if the Steam Directory can't be reached.
 // If you want to connect to a specific server, use `ConnectTo`.
-func (c *Client) Connect() *netutil.PortAddr {
-	var server *netutil.PortAddr
-
-	// try to initialize the directory cache
-	if !steamDirectoryCache.IsInitialized() {
-		err := steamDirectoryCache.Initialize()
-		if err != nil {
-			c.Fatalf("could not find CM, %+v", err)
-		}
+func (c *Client) Connect() (*netutil.PortAddr, error) {
+	server, err := serverList.GetServerCandidate()
+	if err != nil {
+		return nil, err
 	}
 
-	server = steamDirectoryCache.GetRandomCM()
-
 	c.ConnectTo(server)
-	return server
+	return server, nil
 }
 
 // Connects to a specific server.
-// You may want to use one of the `GetRandom*CM()` functions in this package.
 // If this client is already connected, it is disconnected first.
 func (c *Client) ConnectTo(addr *netutil.PortAddr) {
 	c.ConnectToBind(addr, nil)
@@ -160,11 +156,13 @@ func (c *Client) ConnectTo(addr *netutil.PortAddr) {
 func (c *Client) ConnectToBind(addr *netutil.PortAddr, local *net.TCPAddr) {
 	c.disconnect(false)
 
+	c.disconnectExpected = false
 	conn, err := dialTCP(local, addr.ToTCPAddr())
 	if err != nil {
 		c.Fatalf("Connect failed: %v", err)
 		return
 	}
+	c.currentServer = addr
 	c.conn = conn
 	c.writeChan = make(chan protocol.IMsg, 5)
 
@@ -172,6 +170,7 @@ func (c *Client) ConnectToBind(addr *netutil.PortAddr, local *net.TCPAddr) {
 	go c.writeLoop()
 }
 
+// Disconnect disconnects the client from the Steam network - if currently connected.
 func (c *Client) Disconnect() {
 	c.disconnect(true)
 }
@@ -179,6 +178,10 @@ func (c *Client) Disconnect() {
 func (c *Client) disconnect(userRequested bool) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
+
+	if !userRequested && !c.disconnectExpected {
+		serverList.UpdateServerState(c.currentServer, ServerStateBad)
+	}
 
 	if c.conn == nil {
 		return
@@ -190,8 +193,9 @@ func (c *Client) disconnect(userRequested bool) {
 		c.heartbeat.Stop()
 	}
 	close(c.writeChan)
+
 	c.Emit(&DisconnectedEvent{
-		UserRequested: userRequested,
+		UserRequested: userRequested || c.disconnectExpected,
 	})
 
 }
@@ -377,13 +381,18 @@ func (c *Client) handleClientCMList(packet *protocol.Packet) {
 	body := new(steam.CMsgClientCMList)
 	packet.ReadProtoMsg(body)
 
-	l := make([]*netutil.PortAddr, 0)
-	for i, ip := range body.GetCmAddresses() {
-		l = append(l, &netutil.PortAddr{
+	addresses := body.GetCmAddresses()
+	ports := body.GetCmPorts()
+
+	servers := make([]*netutil.PortAddr, 0, len(addresses))
+	for idx, ip := range addresses {
+		servers = append(servers, &netutil.PortAddr{
 			IP:   netutil.ReadIPv4(ip),
-			Port: uint16(body.GetCmPorts()[i]),
+			Port: uint16(ports[idx]),
 		})
 	}
 
-	c.Emit(&ClientCMListEvent{l})
+	serverList.UpdateList(servers)
+
+	c.Emit(&ClientCMListEvent{servers})
 }

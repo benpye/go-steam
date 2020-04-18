@@ -44,6 +44,11 @@ func (p *PortAddr) String() string {
 	return p.IP.String() + ":" + strconv.FormatUint(uint64(p.Port), 10)
 }
 
+// Equal reports if p and x refer to the same IP:Port.
+func (p *PortAddr) Equal(x *PortAddr) bool {
+	return (p.Port == x.Port) && p.IP.Equal(x.IP)
+}
+
 func ReadIPv4(ip uint32) net.IP {
 	r := make(net.IP, 4)
 	r[3] = byte(ip)
