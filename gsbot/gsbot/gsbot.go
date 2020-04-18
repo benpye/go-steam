@@ -37,13 +37,11 @@ func main() {
 		panic(err)
 	}
 	client.RegisterPacketHandler(debug)
-	serverList := gsbot.NewServerList(bot, "serverlist.json")
-	serverList.Connect()
+	client.Connect()
 
 	for event := range client.Events() {
 		auth.HandleEvent(event)
 		debug.HandleEvent(event)
-		serverList.HandleEvent(event)
 
 		switch e := event.(type) {
 		case error:

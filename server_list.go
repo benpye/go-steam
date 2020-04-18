@@ -98,6 +98,10 @@ func (s *ServerList) UpdateServerState(addr *netutil.PortAddr, state ServerState
 		return nil
 	}
 
+	if addr == nil {
+		return nil
+	}
+
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
