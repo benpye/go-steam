@@ -1,6 +1,7 @@
 package steam
 
 import (
+	"context"
 	"crypto/sha1"
 	"sync/atomic"
 	"time"
@@ -97,7 +98,7 @@ func (a *Auth) AcceptNewLoginKey(event *LoginKeyEvent) {
 }
 
 // RequestWebAPIUserNonce requests a nonce to authenticate the user against the web API.
-func (a *Auth) RequestWebAPIUserNonce() *AsyncJob {
+func (a *Auth) RequestWebAPIUserNonce(ctx context.Context) (*WebAPIUserNonceEvent, error) {
 	body := new(steam.CMsgClientRequestWebAPIAuthenticateUserNonce)
 	msg := protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientRequestWebAPIAuthenticateUserNonce, body)
 
@@ -105,7 +106,8 @@ func (a *Auth) RequestWebAPIUserNonce() *AsyncJob {
 	msg.SetSourceJobID(job.JobID)
 	a.client.Write(msg)
 
-	return job
+	ev, err := job.Wait(ctx)
+	return ev.(*WebAPIUserNonceEvent), err
 }
 
 // HandlePacket recieves all packets from the Steam3 network.

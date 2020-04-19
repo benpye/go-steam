@@ -1,6 +1,7 @@
 package steam
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"sync/atomic"
@@ -13,9 +14,19 @@ import (
 // TODO: Make this timeout configurable
 const jobTimeoutDuration = time.Second * 10
 
+// ErrJobTimedOut is returned when the job times out due to no response.
+var ErrJobTimedOut = errors.New("job has timed out")
+
+// ErrJobFailed is returned when the job fails remotely.
+var ErrJobFailed = errors.New("job has failed")
+
+// ErrJobCancelled is returned when the job must be cancelled - ie. disconnect.
+var ErrJobCancelled = errors.New("job has been cancelled")
+
 // AsyncJob represents an asynchronous Steam job.
 type AsyncJob struct {
 	completed uint32
+	jm        *JobManager
 	JobID     protocol.JobID
 	timer     *time.Timer
 	channel   chan interface{}
@@ -23,6 +34,7 @@ type AsyncJob struct {
 
 func newJob(jm *JobManager) *AsyncJob {
 	job := &AsyncJob{
+		jm:      jm,
 		JobID:   jm.NextJobID(),
 		timer:   time.NewTimer(jobTimeoutDuration),
 		channel: make(chan interface{}, 1),
@@ -35,15 +47,17 @@ func newJob(jm *JobManager) *AsyncJob {
 
 func (j *AsyncJob) timerThread() {
 	<-j.timer.C
-	j.complete(errors.New("job has timed out"))
+	j.complete(ErrJobTimedOut)
+	// On a timeout we must remove ourselves from the job manager.
+	_ = j.jm.getJob(j.JobID, true)
 }
 
 func (j *AsyncJob) fail() {
-	j.complete(errors.New("job has failed"))
+	j.complete(ErrJobFailed)
 }
 
 func (j *AsyncJob) cancel() {
-	j.complete(errors.New("job was cancelled"))
+	j.complete(ErrJobCancelled)
 }
 
 func (j *AsyncJob) heartbeat() {
@@ -54,20 +68,23 @@ func (j *AsyncJob) heartbeat() {
 	}
 }
 
-// Result returns the completion channel.
-func (j *AsyncJob) Result() <-chan interface{} {
-	return j.channel
-}
-
 // Wait for the job to finish synchronously.
-func (j *AsyncJob) Wait() (CallbackEvent, error) {
-	ev := <-j.channel
-	switch ev.(type) {
-	case error:
-		return nil, ev.(error)
-	default:
-		return ev.(CallbackEvent), nil
+func (j *AsyncJob) Wait(ctx context.Context) (CallbackEvent, error) {
+	select {
+	case ev := <-j.channel:
+		switch ev.(type) {
+		case error:
+			return nil, ev.(error)
+		default:
+			return ev.(CallbackEvent), nil
+		}
+	case <-ctx.Done():
+		// If the context is cancelled remove the job from the job
+		// manager.
+		_ = j.jm.getJob(j.JobID, true)
+		return nil, ctx.Err()
 	}
+
 }
 
 // complete the job with the given result, if the job has already been completed
@@ -118,7 +135,7 @@ func (jm *JobManager) HandlePacket(packet *protocol.Packet) {
 
 func (jm *JobManager) handleJobHeartbeat(jobID protocol.JobID) {
 	// On a heartbeat we extend the expiration timer as Steam is indicating a response will follow
-	if job := jm.getJob(jobID, true); job != nil {
+	if job := jm.getJob(jobID, false); job != nil {
 		job.heartbeat()
 	}
 }

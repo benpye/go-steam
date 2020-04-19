@@ -1,6 +1,7 @@
 package steam
 
 import (
+	"context"
 	"time"
 
 	"github.com/benpye/go-steam/protocol"
@@ -13,7 +14,7 @@ type App struct {
 }
 
 // RequestFreeLicense requests a free license for a list of app IDs.
-func (a *App) RequestFreeLicense(apps []uint32) *AsyncJob {
+func (a *App) RequestFreeLicense(ctx context.Context, apps []uint32) (*FreeLicenseEvent, error) {
 	body := new(steam.CMsgClientRequestFreeLicense)
 	msg := protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientRequestFreeLicense, body)
 
@@ -23,11 +24,12 @@ func (a *App) RequestFreeLicense(apps []uint32) *AsyncJob {
 	msg.SetSourceJobID(job.JobID)
 	a.client.Write(msg)
 
-	return job
+	ev, err := job.Wait(ctx)
+	return ev.(*FreeLicenseEvent), err
 }
 
 // GetAppOwnershipTicket gets the app ownership ticket for an app.
-func (a *App) GetAppOwnershipTicket(appID uint32) *AsyncJob {
+func (a *App) GetAppOwnershipTicket(ctx context.Context, appID uint32) (*AppOwnershipTicketEvent, error) {
 	body := new(steam.CMsgClientGetAppOwnershipTicket)
 	msg := protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientGetAppOwnershipTicket, body)
 
@@ -37,11 +39,12 @@ func (a *App) GetAppOwnershipTicket(appID uint32) *AsyncJob {
 	msg.SetSourceJobID(job.JobID)
 	a.client.Write(msg)
 
-	return job
+	ev, err := job.Wait(ctx)
+	return ev.(*AppOwnershipTicketEvent), err
 }
 
 // GetDepotDecryptionKey returns the decryption key for a specific depot.
-func (a *App) GetDepotDecryptionKey(depotID uint32, appID uint32) *AsyncJob {
+func (a *App) GetDepotDecryptionKey(ctx context.Context, depotID uint32, appID uint32) (*DepotKeyEvent, error) {
 	body := new(steam.CMsgClientGetDepotDecryptionKey)
 	msg := protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientGetDepotDecryptionKey, body)
 
@@ -52,7 +55,8 @@ func (a *App) GetDepotDecryptionKey(depotID uint32, appID uint32) *AsyncJob {
 	msg.SetSourceJobID(job.JobID)
 	a.client.Write(msg)
 
-	return job
+	ev, err := job.Wait(ctx)
+	return ev.(*DepotKeyEvent), err
 }
 
 func (a *App) HandlePacket(packet *protocol.Packet) {
