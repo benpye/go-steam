@@ -131,6 +131,11 @@ func (jm *JobManager) handleJobFailed(jobID protocol.JobID) {
 }
 
 func (jm *JobManager) getJob(jobID protocol.JobID, remove bool) *AsyncJob {
+	// JobID 0 will never be used, we bail quickly to avoid taking the lock
+	if jobID == 0 {
+		return nil
+	}
+
 	if remove {
 		jm.lock.Lock()
 		defer jm.lock.Unlock()

@@ -41,6 +41,7 @@ type Client struct {
 	Trading       *Trading
 	GC            *GameCoordinator
 	JobManager    *JobManager
+	App           *App
 
 	events        chan interface{}
 	handlers      []PacketHandler
@@ -89,6 +90,8 @@ func NewClient() *Client {
 	client.RegisterPacketHandler(client.Trading)
 	client.GC = newGC(client)
 	client.RegisterPacketHandler(client.GC)
+	client.App = &App{client: client}
+	client.RegisterPacketHandler(client.App)
 	return client
 }
 

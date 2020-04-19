@@ -98,8 +98,8 @@ func (a *Auth) AcceptNewLoginKey(event *LoginKeyEvent) {
 
 // RequestWebAPIUserNonce requests a nonce to authenticate the user against the web API.
 func (a *Auth) RequestWebAPIUserNonce() *AsyncJob {
-	requestNonce := new(steam.CMsgClientRequestWebAPIAuthenticateUserNonce)
-	msg := protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientRequestWebAPIAuthenticateUserNonce, requestNonce)
+	body := new(steam.CMsgClientRequestWebAPIAuthenticateUserNonce)
+	msg := protocol.NewClientMsgProtobuf(steamlang.EMsg_ClientRequestWebAPIAuthenticateUserNonce, body)
 
 	job := a.client.JobManager.NewJob()
 	msg.SetSourceJobID(job.JobID)

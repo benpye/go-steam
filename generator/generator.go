@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -81,6 +82,13 @@ func buildProtobufs(srcCsv string, srcBaseDir string, outDir string, packagePref
 	}
 	defer os.RemoveAll(tmpDir)
 
+	err = os.MkdirAll(outDir, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+
+	groupedRecords := make(map[string][][]string)
+
 	print("# Preprocessing to: " + tmpDir)
 	for _, r := range records[1:] {
 		srcDir := r[0]
@@ -91,41 +99,50 @@ func buildProtobufs(srcCsv string, srcBaseDir string, outDir string, packagePref
 		fullSrcPath := filepath.Join(srcBaseDir, srcDir, srcFile)
 
 		print("# Preprocessing: " + pkg + ", " + srcFile)
-		preprocessProto(packagePrefix+"/"+pkg, fullSrcPath, fullTmpPath)
+		preprocessProto(packagePrefix, pkg, fullSrcPath, fullTmpPath)
+
+		if _, ok := groupedRecords[pkg]; !ok {
+			groupedRecords[pkg] = make([][]string, 0)
+		}
+
+		groupedRecords[pkg] = append(groupedRecords[pkg], r)
 	}
 
-	for _, r := range records[1:] {
-		srcDir := r[0]
-		srcFile := r[1]
-		pkg := r[2]
+	for pkg, packageRecords := range groupedRecords {
+		args := []string{"--go_out=" + outDir}
 
-		print("# Building: " + pkg + ", " + srcFile)
-		compileProto(tmpDir, srcDir, srcFile, outDir)
+		print("# Building: " + pkg)
+		for _, r := range packageRecords {
+			srcDir := r[0]
+			srcFile := r[1]
+
+			filePath := filepath.Join(tmpDir, srcDir, srcFile)
+
+			// protoc doesn't seem to have an issue with the same include path
+			// being included many times
+			args = append(args, "-I="+filepath.Join(tmpDir, srcDir))
+			args = append(args, filePath)
+		}
+
+		execute("protoc", args...)
 	}
 }
 
-func compileProto(srcBase, srcSubdir, proto, outDir string) {
-	err := os.MkdirAll(outDir, os.ModePerm)
-	if err != nil {
-		panic(err)
-	}
+// This regexp is used to fixup package references in the protobuf files.
+// Any issues with this should be caught at generation time but this is definitely fragile.
+// TODO: Use proper protobuf parser instead of fixup regexp.
+var protobufPackageFixup = regexp.MustCompile(`((?:(?:repeated|optional|required)[\t\f ]+|(?:[\t\f ]+\())\.)`)
 
-	srcFile := filepath.Join(srcBase, srcSubdir, proto)
-
-	execute("protoc", "--go_out="+outDir, "-I="+filepath.Join(srcBase, srcSubdir), "-I="+filepath.Join(srcBase, "steam"), srcFile)
-}
-
-func preprocessProto(pkg, srcFile, outFile string) {
+func preprocessProto(pkgPrefix, pkg, srcFile, outFile string) {
 	err := os.MkdirAll(filepath.Dir(outFile), os.ModePerm)
 	if err != nil {
 		panic(err)
 	}
 
-	in, err := os.Open(srcFile)
+	input, err := ioutil.ReadFile(srcFile)
 	if err != nil {
 		panic(err)
 	}
-	defer in.Close()
 
 	out, err := os.Create(outFile)
 	if err != nil {
@@ -133,17 +150,23 @@ func preprocessProto(pkg, srcFile, outFile string) {
 	}
 	defer out.Close()
 
-	_, err = io.WriteString(out, "syntax = \"proto2\";\n")
+	_, err = out.WriteString("syntax = \"proto2\";\n")
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = io.WriteString(out, "option go_package = \""+pkg+"\";\n")
+	_, err = out.WriteString("package " + pkg + ";\n")
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = io.Copy(out, in)
+	_, err = out.WriteString("option go_package = \"" + pkgPrefix + "/" + pkg + "\";\n")
+	if err != nil {
+		panic(err)
+	}
+
+	output := protobufPackageFixup.ReplaceAll(input, []byte("${1}"+pkg+"."))
+	_, err = out.Write(output)
 	if err != nil {
 		panic(err)
 	}
